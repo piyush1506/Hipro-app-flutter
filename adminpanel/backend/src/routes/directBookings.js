@@ -5,6 +5,10 @@ const crypto = require('crypto');
 const prisma = require('../prisma');
 const { addNotification } = require('./notifications');
 const { authenticate, requireAdmin, optionalAuth } = require('../middleware/auth');
+const {
+  syncRequestStatusFromBooking,
+  emitStatusSync,
+} = require('../services/statusSync.service');
 
 // ==========================================
 // VALID STATUS TRANSITIONS (Bug #9 fix)
@@ -513,6 +517,26 @@ router.post('/', authenticate, async (req, res) => {
       return res.status(404).json({ success: false, message: 'No valid sub-services found for direct booking' });
     }
 
+    // Record coupon redemption if coupon was applied
+    const redeemedCoupon = req.body.couponCode;
+    if (redeemedCoupon && typeof redeemedCoupon === 'string' && redeemedCoupon.trim()) {
+      try {
+        const offersRouter = require('./offers');
+        if (offersRouter && typeof offersRouter.recordCouponRedemption === 'function') {
+          offersRouter.recordCouponRedemption({
+            couponCode: redeemedCoupon,
+            userId: validUserId,
+            phone: customerPhone,
+            email: req.user?.email,
+            orderId: razorpayOrderId,
+            bookingNumber: createdBookings.map(b => b.bookingNumber).join(', ')
+          });
+        }
+      } catch (cErr) {
+        console.error('Failed to record coupon redemption in directBookings:', cErr);
+      }
+    }
+
     res.status(201).json({
       success: true,
       message: 'Direct booking confirmed successfully',
@@ -698,6 +722,16 @@ router.patch('/:id/status', authenticate, requireAdmin, async (req, res) => {
       include: { service: true, subService: true }
     });
 
+    // Unified status sync: mirror the booking lifecycle onto the inspection
+    // request it belongs to (terminal states only, see statusSync.service).
+    let syncedRequest = null;
+    try {
+      const sync = await syncRequestStatusFromBooking(prisma, updated, { actor: updatedBy || 'ADMIN_DESK' });
+      syncedRequest = sync?.request || null;
+    } catch (syncErr) {
+      console.error('Booking status sync failed:', syncErr);
+    }
+
     const io = req.app.get('io');
     if (io) {
       io.to('admin_room').emit('direct_booking_updated', {
@@ -712,12 +746,16 @@ router.patch('/:id/status', authenticate, requireAdmin, async (req, res) => {
           booking: updated
         });
       }
+      if (syncedRequest) {
+        emitStatusSync(io, { request: syncedRequest, booking: updated, action: 'BOOKING_STATUS_SYNCED' });
+      }
     }
 
     res.json({
       success: true,
       message: `Booking status updated to ${status}`,
-      booking: updated
+      booking: updated,
+      syncedRequestStatus: syncedRequest?.status || null,
     });
   } catch (error) {
     res.status(500).json({ success: false, error: 'Internal server error' });

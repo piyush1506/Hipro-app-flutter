@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:shimmer/shimmer.dart';
 
 import '../../config/theme/app_colors.dart';
 
@@ -186,11 +187,15 @@ class EmptyState extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.message,
+    this.actionLabel,
+    this.onAction,
   });
 
   final IconData icon;
   final String title;
   final String message;
+  final String? actionLabel;
+  final VoidCallback? onAction;
 
   @override
   Widget build(BuildContext context) {
@@ -203,21 +208,479 @@ class EmptyState extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.1),
+                gradient: LinearGradient(
+                  colors: [
+                    AppColors.primary.withValues(alpha: 0.14),
+                    AppColors.accent.withValues(alpha: 0.08),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
                 shape: BoxShape.circle,
+                border: Border.all(
+                  color: AppColors.primary.withValues(alpha: 0.14),
+                ),
               ),
               child: Icon(icon, color: AppColors.primaryLight, size: 32),
             ),
             const SizedBox(height: 18),
-            Text(title, style: Theme.of(context).textTheme.titleMedium),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
             const SizedBox(height: 6),
             Text(
               message,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: AppColors.textMuted),
+              style: const TextStyle(color: AppColors.textMuted, height: 1.45),
             ),
+            if (actionLabel != null && onAction != null) ...[
+              const SizedBox(height: 18),
+              FilledButton.icon(
+                onPressed: onAction,
+                icon: const Icon(Icons.arrow_forward_rounded, size: 18),
+                label: Text(actionLabel!),
+                style: FilledButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 13,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Wraps any widget with a tactile press animation.
+///
+/// Gives cards and list rows the "physical" feedback a native app should
+/// have, without having to hand-roll a stateful widget at every call site.
+class PressableScale extends StatefulWidget {
+  const PressableScale({
+    super.key,
+    required this.child,
+    this.onTap,
+    this.onLongPress,
+    this.scale = 0.97,
+    this.borderRadius,
+  });
+
+  final Widget child;
+  final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
+  final double scale;
+  final BorderRadius? borderRadius;
+
+  @override
+  State<PressableScale> createState() => _PressableScaleState();
+}
+
+class _PressableScaleState extends State<PressableScale> {
+  bool _pressed = false;
+
+  void _setPressed(bool value) {
+    if (_pressed == value || !mounted) return;
+    setState(() => _pressed = value);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedScale(
+      scale: _pressed ? widget.scale : 1,
+      duration: const Duration(milliseconds: 110),
+      curve: Curves.easeOut,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: widget.onTap,
+          onLongPress: widget.onLongPress,
+          onTapDown: (_) => _setPressed(true),
+          onTapUp: (_) => _setPressed(false),
+          onTapCancel: () => _setPressed(false),
+          borderRadius: widget.borderRadius,
+          splashColor: AppColors.primary.withValues(alpha: 0.06),
+          highlightColor: Colors.transparent,
+          child: widget.child,
+        ),
+      ),
+    );
+  }
+}
+
+/// The standard Hipro surface card.
+///
+/// Flat grey borders everywhere make the app feel dated, so cards use a soft
+/// elevation that grows while the card is being pressed.
+class AppCard extends StatefulWidget {
+  const AppCard({
+    super.key,
+    required this.child,
+    this.onTap,
+    this.onLongPress,
+    this.padding = const EdgeInsets.all(14),
+    this.borderRadius = 18,
+    this.color,
+    this.borderColor,
+    this.elevated = false,
+    this.gradient,
+    this.margin,
+  });
+
+  final Widget child;
+  final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
+  final EdgeInsetsGeometry padding;
+  final double borderRadius;
+  final Color? color;
+  final Color? borderColor;
+  final bool elevated;
+  final Gradient? gradient;
+  final EdgeInsetsGeometry? margin;
+
+  @override
+  State<AppCard> createState() => _AppCardState();
+}
+
+class _AppCardState extends State<AppCard> {
+  bool _pressed = false;
+
+  void _setPressed(bool value) {
+    if (_pressed == value || !mounted) return;
+    setState(() => _pressed = value);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final radius = BorderRadius.circular(widget.borderRadius);
+    final hasGradient = widget.gradient != null;
+
+    return GestureDetector(
+      onTap: widget.onTap,
+      onLongPress: widget.onLongPress,
+      onTapDown: widget.onTap == null ? null : (_) => _setPressed(true),
+      onTapUp: widget.onTap == null ? null : (_) => _setPressed(false),
+      onTapCancel: widget.onTap == null ? null : () => _setPressed(false),
+      child: AnimatedScale(
+        scale: _pressed ? 0.985 : 1,
+        duration: const Duration(milliseconds: 130),
+        curve: Curves.easeOut,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOut,
+          padding: widget.padding,
+          margin: widget.margin,
+          decoration: BoxDecoration(
+            color: hasGradient ? null : (widget.color ?? AppColors.surface),
+            gradient: widget.gradient,
+            borderRadius: radius,
+            border: Border.all(
+              color: widget.borderColor ??
+                  (hasGradient
+                      ? Colors.white.withValues(alpha: 0.20)
+                      : AppColors.borderSubtle),
+            ),
+            boxShadow: _pressed
+                ? AppShadows.lift
+                : (widget.elevated ? AppShadows.md : AppShadows.xs),
+          ),
+          child: widget.child,
+        ),
+      ),
+    );
+  }
+}
+
+/// Rounded gradient tile used for service / category icons.
+class GradientIconTile extends StatelessWidget {
+  const GradientIconTile({
+    super.key,
+    this.icon,
+    this.size = 44,
+    this.iconSize,
+    this.gradient,
+    this.background,
+    this.iconColor,
+    this.borderRadius,
+    this.child,
+    this.shadow = false,
+  });
+
+  final IconData? icon;
+  final double size;
+  final double? iconSize;
+  final Gradient? gradient;
+  final Color? background;
+  final Color? iconColor;
+  final double? borderRadius;
+  final Widget? child;
+  final bool shadow;
+
+  @override
+  Widget build(BuildContext context) {
+    final radius = BorderRadius.circular(borderRadius ?? size * 0.32);
+
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: gradient == null ? (background ?? AppColors.primary) : null,
+        gradient: gradient,
+        borderRadius: radius,
+        boxShadow: shadow ? AppShadows.glow(AppColors.primary) : null,
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: child ??
+          Icon(
+            icon,
+            color: iconColor ?? Colors.white,
+            size: iconSize ?? size * 0.46,
+          ),
+    );
+  }
+}
+
+/// Shimmering placeholder used while content is loading.
+class SkeletonBox extends StatelessWidget {
+  const SkeletonBox({
+    super.key,
+    this.width,
+    this.height = 16,
+    this.radius = 10,
+  });
+
+  final double? width;
+  final double height;
+  final double radius;
+
+  @override
+  Widget build(BuildContext context) {
+    return Shimmer.fromColors(
+      baseColor: AppColors.surfaceElevated,
+      highlightColor: AppColors.surfaceLight,
+      child: Container(
+        width: width,
+        height: height,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(radius),
+        ),
+      ),
+    );
+  }
+}
+
+/// Rounded search input with a clear affordance.
+class AppSearchField extends StatelessWidget {
+  const AppSearchField({
+    super.key,
+    required this.controller,
+    required this.onChanged,
+    this.hint = 'Search services...',
+    this.onClear,
+    this.autofocus = false,
+    this.prefixIcon = Icons.search_rounded,
+  });
+
+  final TextEditingController controller;
+  final ValueChanged<String> onChanged;
+  final String hint;
+  final VoidCallback? onClear;
+  final bool autofocus;
+  final IconData prefixIcon;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: controller,
+      onChanged: onChanged,
+      autofocus: autofocus,
+      textInputAction: TextInputAction.search,
+      style: const TextStyle(
+        fontSize: 13.5,
+        fontWeight: FontWeight.w600,
+        color: AppColors.textPrimary,
+      ),
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 13.5),
+        prefixIcon: Icon(prefixIcon, color: AppColors.textMuted, size: 20),
+        suffixIcon: ValueListenableBuilder<TextEditingValue>(
+          valueListenable: controller,
+          builder: (context, value, _) {
+            if (value.text.isEmpty) return const SizedBox.shrink();
+            return IconButton(
+              icon: const Icon(
+                Icons.close_rounded,
+                size: 18,
+                color: AppColors.textMuted,
+              ),
+              splashRadius: 18,
+              onPressed: onClear,
+            );
+          },
+        ),
+        filled: true,
+        fillColor: AppColors.surface,
+        isDense: true,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: AppColors.borderSubtle),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: AppColors.borderSubtle),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: AppColors.primary, width: 1.4),
+        ),
+      ),
+    );
+  }
+}
+
+/// Compact KPI tile used on dashboards and summary strips.
+class MetricTile extends StatelessWidget {
+  const MetricTile({
+    super.key,
+    required this.label,
+    required this.value,
+    this.icon,
+    this.color = AppColors.primary,
+    this.gradient,
+    this.caption,
+    this.onTap,
+  });
+
+  final String label;
+  final String value;
+  final IconData? icon;
+  final Color color;
+  final Gradient? gradient;
+  final String? caption;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return PressableScale(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.borderSubtle),
+          boxShadow: AppShadows.xs,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            GradientIconTile(
+              icon: icon,
+              size: 30,
+              iconSize: 16,
+              gradient: gradient,
+              background: color.withValues(alpha: 0.12),
+              iconColor: color,
+              borderRadius: 10,
+            ),
+            const SizedBox(height: 10),
+            Text(
+              value,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                letterSpacing: -0.4,
+                height: 1.1,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: AppColors.textMuted,
+                fontSize: 11.5,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            if (caption != null) ...[
+              const SizedBox(height: 6),
+              Text(
+                caption!,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: color,
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Small pill used for statuses, filters and metadata.
+class PillLabel extends StatelessWidget {
+  const PillLabel({
+    super.key,
+    required this.label,
+    this.color = AppColors.primary,
+    this.icon,
+    this.filled = false,
+  });
+
+  final String label;
+  final Color color;
+  final IconData? icon;
+  final bool filled;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      decoration: BoxDecoration(
+        color: filled ? color : color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: filled ? color : color.withValues(alpha: 0.24),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icon != null) ...[
+            Icon(icon, color: filled ? Colors.white : color, size: 13),
+            const SizedBox(width: 4),
+          ],
+          Text(
+            label,
+            style: TextStyle(
+              color: filled ? Colors.white : color,
+              fontSize: 10.5,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
       ),
     );
   }

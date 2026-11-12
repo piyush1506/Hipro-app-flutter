@@ -22,6 +22,7 @@ import '../models/slide_model.dart';
 import '../../../core/widgets/city_selection_sheet.dart';
 import '../../../core/widgets/offers_section.dart';
 import '../../../core/widgets/promo_slider.dart';
+import '../../../core/widgets/app_ui.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key, this.onOpenDrawer, this.onSwitchTab});
@@ -758,26 +759,35 @@ class _HomeScreenState extends State<HomeScreen> {
                 letterSpacing: -0.3,
               ),
             ),
-            GestureDetector(
+            PressableScale(
               onTap: () => widget.onSwitchTab?.call(1),
-              child: const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'View All',
-                    style: TextStyle(
-                      color: Color(0xFF475569),
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
+              borderRadius: BorderRadius.circular(20),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEFF6FF),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: const Color(0xFFDBEAFE)),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'View All',
+                      style: TextStyle(
+                        color: Color(0xFF1864E8),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
-                  ),
-                  SizedBox(width: 4),
-                  Icon(
-                    Icons.arrow_forward_rounded,
-                    color: Color(0xFF475569),
-                    size: 14,
-                  ),
-                ],
+                    SizedBox(width: 3),
+                    Icon(
+                      Icons.arrow_forward_rounded,
+                      color: Color(0xFF1864E8),
+                      size: 13,
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
@@ -789,9 +799,9 @@ class _HomeScreenState extends State<HomeScreen> {
           itemCount: matchedItems.length,
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 2,
-            mainAxisSpacing: 10,
-            crossAxisSpacing: 10,
-            childAspectRatio: 1.46,
+            mainAxisSpacing: 12,
+            crossAxisSpacing: 12,
+            childAspectRatio: 0.84,
           ),
           itemBuilder: (context, index) {
             final item = matchedItems[index];
@@ -826,81 +836,128 @@ class _HomeScreenState extends State<HomeScreen> {
     required Color iconColor,
     required VoidCallback onTap,
   }) {
-    return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(18),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(18),
-        child: Ink(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: const Color(0xFFE2E8F0)),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF0F172A).withValues(alpha: 0.04),
-                blurRadius: 10,
-                offset: const Offset(0, 3),
-              ),
-            ],
+    final hasImage =
+        imageUrl != null && imageUrl.isNotEmpty && !imageUrl.contains('cdn-icons-png');
+
+    return AppCard(
+      onTap: onTap,
+      padding: EdgeInsets.zero,
+      borderRadius: 18,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Media banner
+          ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
+            child: AspectRatio(
+              aspectRatio: 1.62,
+              child: hasImage
+                  ? CachedNetworkImage(
+                      imageUrl: imageUrl!,
+                      fit: BoxFit.cover,
+                      filterQuality: FilterQuality.high,
+                      fadeInDuration: const Duration(milliseconds: 120),
+                      fadeOutDuration: const Duration(milliseconds: 120),
+                      placeholder: (_, _) => Shimmer.fromColors(
+                        baseColor: const Color(0xFFE2E8F0),
+                        highlightColor: const Color(0xFFF8FAFC),
+                        child: Container(color: bgColor),
+                      ),
+                      errorWidget: (_, _, _) => Container(
+                        color: bgColor,
+                        child: Icon(icon, color: iconColor, size: 34),
+                      ),
+                    )
+                  : Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            bgColor,
+                            Color.lerp(bgColor, Colors.white, 0.45)!,
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                      ),
+                      child: Center(
+                        child: Container(
+                          width: 52,
+                          height: 52,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.72),
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: iconColor.withValues(alpha: 0.18),
+                                blurRadius: 14,
+                                offset: const Offset(0, 6),
+                              ),
+                            ],
+                          ),
+                          child: Icon(icon, color: iconColor, size: 26),
+                        ),
+                      ),
+                    ),
+            ),
           ),
-          child: Row(
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(18),
-                child: Container(
-                  width: 74,
-                  height: 74,
-                  decoration: BoxDecoration(
-                    color: bgColor,
-                    borderRadius: BorderRadius.circular(18),
-                  ),
-                  padding: (imageUrl != null && imageUrl.isNotEmpty && !imageUrl.contains('cdn-icons-png'))
-                      ? EdgeInsets.zero
-                      : const EdgeInsets.all(8),
-                  child: (imageUrl != null && imageUrl.isNotEmpty)
-                      ? CachedNetworkImage(
-                          imageUrl: imageUrl,
-                          fit: imageUrl.contains('cdn-icons-png')
-                              ? BoxFit.contain
-                              : BoxFit.cover,
-                          filterQuality: FilterQuality.high,
-                          fadeInDuration: const Duration(milliseconds: 100),
-                          fadeOutDuration: const Duration(milliseconds: 100),
-                          placeholder: (_, _) => Shimmer.fromColors(
-                            baseColor: const Color(0xFFE2E8F0),
-                            highlightColor: const Color(0xFFF8FAFC),
-                            child: Container(
-                              color: Colors.white,
-                            ),
-                          ),
-                          errorWidget: (_, _, _) => Icon(
-                            icon,
-                            color: iconColor,
-                            size: 36,
-                          ),
-                        )
-                      : Icon(icon, color: iconColor, size: 38),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
+
+          // Details
+          Padding(
+            padding: const EdgeInsets.fromLTRB(11, 9, 9, 10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
                   title,
-                  maxLines: 2,
+                  maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     color: Color(0xFF0F172A),
                     fontSize: 13.5,
                     fontWeight: FontWeight.w700,
-                    height: 1.25,
+                    height: 1.2,
                   ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 5),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(3),
+                      decoration: BoxDecoration(
+                        color: iconColor.withValues(alpha: 0.14),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.bolt_rounded,
+                        size: 11,
+                        color: iconColor,
+                      ),
+                    ),
+                    const SizedBox(width: 5),
+                    Flexible(
+                      child: Text(
+                        'Instant booking',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: iconColor,
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Icon(
+                      Icons.chevron_right_rounded,
+                      size: 14,
+                      color: Color(0xFF94A3B8),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }

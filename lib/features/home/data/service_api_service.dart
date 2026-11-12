@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/session/user_session.dart';
 import '../../services/models/service_model.dart';
 import '../../offers/models/offer_model.dart';
 import '../models/city_model.dart';
@@ -162,9 +163,18 @@ class ServiceApiService {
       return _cachedOffers!;
     }
     try {
+      final session = UserSession();
       final response = await apiClient.dio.get(
         '/offers',
-        queryParameters: section != null ? {'section': section} : null,
+        queryParameters: {
+          if (section != null) ...{'section': section},
+          if (session.phone != null && session.phone!.trim().isNotEmpty)
+            'phone': session.phone!.trim(),
+          if (session.userId != null && session.userId!.trim().isNotEmpty)
+            'userId': session.userId!.trim(),
+          if (session.email != null && session.email!.trim().isNotEmpty)
+            'email': session.email!.trim(),
+        },
       );
       if (response.statusCode == 200 && response.data != null) {
         final dynamic rawList =
@@ -190,12 +200,16 @@ class ServiceApiService {
     String? section,
   }) async {
     try {
+      final session = UserSession();
       final response = await apiClient.dio.post(
         '/offers/validate',
         data: {
           'code': code.trim().toUpperCase(),
           'amount': amount,
           if (section != null) ...{'section': section},
+          'phone': session.phone ?? '',
+          'userId': session.userId ?? '',
+          'email': session.email ?? '',
         },
       );
       if (response.data != null &&
