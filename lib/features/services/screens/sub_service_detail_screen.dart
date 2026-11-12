@@ -498,48 +498,180 @@ class _SubServiceDetailScreenState extends State<SubServiceDetailScreen> {
                         ),
                       ],
 
-                      // Quotable Booking Option Card
-                      if (subService.getQuoteEnabled) ...[
-                        const SizedBox(height: 20),
-                        Container(
-                          padding: const EdgeInsets.all(14),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFEEF2FF),
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: const Color(0xFFC7D2FE)),
-                          ),
-                          child: Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF4F46E5),
-                                  borderRadius: BorderRadius.circular(10),
+                      // ==========================================
+                      // SELECT SERVICE TYPE (Instant Booking vs Inspection Request)
+                      // ==========================================
+                      const SizedBox(height: 24),
+                      const Text(
+                        'Select Service Type',
+                        style: TextStyle(
+                          color: Color(0xFF0F172A),
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.2,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+
+                      // Option 1: Instant Booking Card
+                      Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF8FAFC),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFEFF6FF),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: const Icon(Icons.flash_on_rounded, color: Color(0xFF1864E8), size: 20),
                                 ),
-                                child: const Icon(Icons.request_quote_outlined, color: Colors.white, size: 20),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text(
-                                      'Prefer a custom quotation?',
-                                      style: TextStyle(
-                                        color: Color(0xFF1E1B4B),
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w700,
+                                const SizedBox(width: 10),
+                                const Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Instant Booking',
+                                        style: TextStyle(
+                                          color: Color(0xFF0F172A),
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w800,
+                                        ),
                                       ),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    const Text(
-                                      'Upload damage photos/videos to get an advance quotation from engineers.',
-                                      style: TextStyle(color: Color(0xFF4338CA), fontSize: 11.5),
-                                    ),
-                                  ],
+                                      Text(
+                                        'Select multiple services • Add to cart • Pay upfront visit fee',
+                                        style: TextStyle(color: Color(0xFF64748B), fontSize: 11.5),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                              TextButton(
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                ListenableBuilder(
+                                  listenable: cart,
+                                  builder: (context, _) {
+                                    final inCart = cart.isInCart(subService.id);
+                                    return Expanded(
+                                      child: OutlinedButton.icon(
+                                        onPressed: () {
+                                          final added = cart.toggleItem(subService, service);
+                                          AppToast.show(
+                                            context,
+                                            message: added
+                                                ? 'Added ${subService.name} to Cart!'
+                                                : 'Removed from Cart.',
+                                            actionLabel: added ? 'View Cart' : null,
+                                            onAction: added ? () => CartSheet.show(context) : null,
+                                          );
+                                        },
+                                        icon: Icon(inCart ? Icons.check_rounded : Icons.add_shopping_cart_rounded, size: 15),
+                                        label: Text(
+                                          inCart ? 'In Cart (${cart.count})' : 'Add to Cart',
+                                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+                                        ),
+                                        style: OutlinedButton.styleFrom(
+                                          foregroundColor: inCart ? Colors.white : const Color(0xFF1864E8),
+                                          backgroundColor: inCart ? const Color(0xFF1864E8) : Colors.white,
+                                          side: const BorderSide(color: Color(0xFF1864E8)),
+                                          padding: const EdgeInsets.symmetric(vertical: 10),
+                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: ElevatedButton(
+                                    onPressed: subService.bookNowEnabled
+                                        ? () {
+                                            DirectBookingSheet.show(
+                                              context,
+                                              service: service,
+                                              subService: subService,
+                                            );
+                                          }
+                                        : null,
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color(0xFF1864E8),
+                                      foregroundColor: Colors.white,
+                                      padding: const EdgeInsets.symmetric(vertical: 10),
+                                      elevation: 0,
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                    ),
+                                    child: Text(
+                                      'Book (₹${subService.visitingCharge.toInt()})',
+                                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 12),
+
+                      // Option 2: Inspection Request Card
+                      Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF0FDF4),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: const Color(0xFFBBF7D0)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFDCFCE7),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: const Icon(Icons.engineering_rounded, color: Color(0xFF16A34A), size: 20),
+                                ),
+                                const SizedBox(width: 10),
+                                const Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Inspection Request',
+                                        style: TextStyle(
+                                          color: Color(0xFF14532D),
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w800,
+                                        ),
+                                      ),
+                                      Text(
+                                        '1 engineer site visit • Assesses scope & BOM • Pay after quote',
+                                        style: TextStyle(color: Color(0xFF15803D), fontSize: 11.5),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            SizedBox(
+                              width: double.infinity,
+                              child: OutlinedButton.icon(
                                 onPressed: () {
                                   Navigator.of(context).push(
                                     MaterialPageRoute(
@@ -550,16 +682,23 @@ class _SubServiceDetailScreenState extends State<SubServiceDetailScreen> {
                                     ),
                                   );
                                 },
-                                style: TextButton.styleFrom(
-                                  foregroundColor: const Color(0xFF4F46E5),
-                                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                                icon: const Icon(Icons.calendar_month_outlined, size: 16),
+                                label: const Text(
+                                  'Request Engineer Inspection (Free)',
+                                  style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700),
                                 ),
-                                child: const Text('Get Quote →', style: TextStyle(fontWeight: FontWeight.w700)),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: const Color(0xFF16A34A),
+                                  backgroundColor: Colors.white,
+                                  side: const BorderSide(color: Color(0xFF16A34A)),
+                                  padding: const EdgeInsets.symmetric(vertical: 10),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                ),
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
-                      ],
+                      ),
                     ],
                   ),
                 ),

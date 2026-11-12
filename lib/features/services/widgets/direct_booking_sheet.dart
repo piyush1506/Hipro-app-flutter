@@ -10,51 +10,67 @@ import '../../../core/widgets/app_ui.dart';
 import '../../offers/models/offer_model.dart';
 import '../../offers/widgets/coupon_input_card.dart';
 import '../../payment/screens/payment_success_screen.dart';
+import '../data/cart_service.dart';
 import '../models/service_model.dart';
 import '../screens/create_inspection_screen.dart';
 
 class DirectBookingSheet extends StatefulWidget {
-  final ServiceItem service;
-  final SubService subService;
+  final ServiceItem? service;
+  final SubService? subService;
+  final List<CartItem>? cartItems;
 
   const DirectBookingSheet({
     super.key,
-    required this.service,
-    required this.subService,
+    this.service,
+    this.subService,
+    this.cartItems,
   });
 
   static Future<void> show(
     BuildContext context, {
-    required ServiceItem service,
-    required SubService subService,
+    ServiceItem? service,
+    SubService? subService,
+    List<CartItem>? cartItems,
   }) {
-    if (!subService.bookNowEnabled) {
-      AppToast.show(
-        context,
-        title: 'Instant Booking Unavailable',
-        message: '${subService.name} is not available for Instant Booking. Please request a quote.',
-        actionLabel: 'Get Quote',
-        onAction: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (ctx) => CreateInspectionScreen(
-                preselectedService: service,
-                preselectedSubService: subService,
-              ),
-            ),
-          );
-        },
-      );
-      return Future.value();
-    }
-    return Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (ctx) => DirectBookingSheet(
-          service: service,
-          subService: subService,
+    if (cartItems != null && cartItems.isNotEmpty) {
+      return Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (ctx) => DirectBookingSheet(
+            cartItems: cartItems,
+          ),
         ),
-      ),
-    );
+      );
+    }
+    if (subService != null && service != null) {
+      if (!subService.bookNowEnabled) {
+        AppToast.show(
+          context,
+          title: 'Instant Booking Unavailable',
+          message: '${subService.name} is not available for Instant Booking. Please request a quote.',
+          actionLabel: 'Get Quote',
+          onAction: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (ctx) => CreateInspectionScreen(
+                  preselectedService: service,
+                  preselectedSubService: subService,
+                ),
+              ),
+            );
+          },
+        );
+        return Future.value();
+      }
+      return Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (ctx) => DirectBookingSheet(
+            service: service,
+            subService: subService,
+          ),
+        ),
+      );
+    }
+    return Future.value();
   }
 
   @override
@@ -96,9 +112,24 @@ class _DirectBookingSheetState extends State<DirectBookingSheet> {
 
   AppliedCoupon? _appliedCoupon;
 
-  double get _visitingCharge => widget.subService.visitingCharge;
-  List<ServiceChargeItem> get _additionalCharges => widget.subService.additionalCharges;
-  double get _basePayableAmount => widget.subService.totalAmount;
+  bool get _isCart => widget.cartItems != null && widget.cartItems!.isNotEmpty;
+  List<CartItem> get _items {
+    if (_isCart) return widget.cartItems!;
+    if (widget.service != null && widget.subService != null) {
+      return [CartItem(service: widget.service!, subService: widget.subService!)];
+    }
+    return [];
+  }
+  SubService? get _subService => _items.isNotEmpty ? _items.first.subService : widget.subService;
+
+  double get _visitingCharge => _items.fold(0.0, (sum, i) => sum + i.visitingCharge);
+  List<ServiceChargeItem> get _additionalCharges => (!_isCart && widget.subService != null)
+      ? widget.subService!.additionalCharges
+      : [];
+  double get _basePayableAmount {
+    if (_isCart) return _visitingCharge;
+    return widget.subService?.totalAmount ?? _visitingCharge;
+  }
   double get _totalPayableAmount {
     if (_appliedCoupon != null) {
       return (_basePayableAmount - _appliedCoupon!.discountAmount)
@@ -122,9 +153,10 @@ class _DirectBookingSheetState extends State<DirectBookingSheet> {
     _latController = TextEditingController();
     _lngController = TextEditingController();
 
-    // Initialize controllers/defaults for dynamic requiredFields
-    for (int i = 0; i < widget.subService.requiredFields.length; i++) {
-      final f = widget.subService.requiredFields[i];
+    // Initialize controllers/defaults for dynamic requiredFields (single service mode)
+    final requiredFields = (!_isCart && widget.subService != null) ? widget.subService!.requiredFields : [];
+    for (int i = 0; i < requiredFields.length; i++) {
+      final f = requiredFields[i];
       if (f is Map) {
         final id = (f['id'] != null && f['id'].toString().trim().isNotEmpty)
             ? f['id'].toString().trim()
@@ -210,8 +242,9 @@ class _DirectBookingSheetState extends State<DirectBookingSheet> {
 
   // --- Step 1 -> Step 2 Validation ---
   void _validateStep1AndProceed() {
-    for (int i = 0; i < widget.subService.requiredFields.length; i++) {
-      final f = widget.subService.requiredFields[i];
+    final requiredFields = (!_isCart && widget.subService != null) ? widget.subService!.requiredFields : [];
+    for (int i = 0; i < requiredFields.length; i++) {
+      final f = requiredFields[i];
       if (f is Map) {
         final id = (f['id'] != null && f['id'].toString().trim().isNotEmpty)
             ? f['id'].toString().trim()
@@ -301,6 +334,9 @@ class _DirectBookingSheetState extends State<DirectBookingSheet> {
 
     setState(() => _isProcessing = true);
 
+    final subId = _subService?.id ?? '';
+    final subIds = _items.map((e) => e.subService.id).toList();
+
     String? serverOrderId;
     try {
       final res = await ApiClient().dio.post(
@@ -310,7 +346,8 @@ class _DirectBookingSheetState extends State<DirectBookingSheet> {
           'customerName': name,
           'customerPhone': phone,
           'customerEmail': email,
-          'subServiceId': widget.subService.id,
+          'subServiceId': subId,
+          'subServiceIds': subIds,
           'couponCode': _appliedCoupon?.code,
         },
       );
@@ -328,7 +365,9 @@ class _DirectBookingSheetState extends State<DirectBookingSheet> {
       amountInPaise: (_totalPayableAmount * 100).round(),
       orderId: serverOrderId,
       merchantName: 'Hipro',
-      description: '${widget.subService.name} - Visiting Charge',
+      description: _isCart
+          ? '${_items.length} Services Instant Booking'
+          : '${_subService?.name ?? "Service"} - Visiting Charge',
       prefillName: name,
       prefillPhone: phone,
       prefillEmail: email,
@@ -345,11 +384,22 @@ class _DirectBookingSheetState extends State<DirectBookingSheet> {
 
     try {
       final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
+      final subId = _subService?.id ?? '';
+      final subIds = _items.map((e) => e.subService.id).toList();
+      final itemsPayload = _items.map((e) => {
+        'subServiceId': e.subService.id,
+        'serviceId': e.service.id,
+        'serviceName': e.service.name,
+        'subServiceName': e.subService.name,
+        'visitingCharge': e.visitingCharge,
+      }).toList();
 
       final res = await ApiClient().dio.post(
         '/direct-bookings',
         data: {
-          'subServiceId': widget.subService.id,
+          'subServiceId': subId,
+          'subServiceIds': subIds,
+          'items': itemsPayload,
           'couponCode': _appliedCoupon?.code,
           'customerName': _nameController.text.trim(),
           'customerPhone': _phoneController.text.trim(),
@@ -362,28 +412,40 @@ class _DirectBookingSheetState extends State<DirectBookingSheet> {
           'scheduledDate': dateStr,
           'scheduledSlot': _selectedSlot,
           'customFieldAnswers': _customAnswers,
-          'notes': 'Booked via Hipro Mobile App',
+          'notes': _isCart ? 'Multi-service instant booking via Cart' : 'Booked via Hipro Mobile App',
           'razorpayPaymentId': paymentId,
           'razorpayOrderId': orderId,
           'razorpaySignature': signature,
         },
       );
 
+      if (_isCart) {
+        CartService.instance.clear();
+      }
+
       if (!mounted) return;
       setState(() => _isProcessing = false);
 
       String bookingNum = '';
-      if (res.data != null && res.data['booking'] != null) {
-        bookingNum = res.data['booking']['bookingNumber'] ?? bookingNum;
+      if (res.data != null) {
+        if (res.data['bookingNumber'] != null) {
+          bookingNum = res.data['bookingNumber'].toString();
+        } else if (res.data['booking'] != null) {
+          bookingNum = res.data['booking']['bookingNumber'] ?? bookingNum;
+        }
       }
 
       Navigator.of(context).pop(); // Dismiss direct booking screen
 
+      final successTitle = _isCart
+          ? '${_items.length} Services Booked (${_items.map((e) => e.name).join(", ")})'
+          : (_subService?.name ?? 'Service Booking');
+
       Navigator.of(context).push(
         MaterialPageRoute(
           builder: (context) => PaymentSuccessScreen(
-            title: widget.subService.name,
-            amount: _visitingCharge,
+            title: successTitle,
+            amount: _totalPayableAmount,
             transactionId: paymentId,
             paymentMethod: 'Razorpay Pre-paid (UPI/Card)',
             isDirectBooking: true,
@@ -612,59 +674,132 @@ class _DirectBookingSheetState extends State<DirectBookingSheet> {
       key: const ValueKey('step_1_date_time'),
       padding: const EdgeInsets.all(20),
       children: [
-        // Subservice Card Header
-        Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF8FAFC),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFE2E8F0)),
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+        // Services Header (Multi-service Cart or Single Service)
+        if (_isCart) ...[
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      sub.name,
+                      'Cart Services (${_items.length})',
                       style: const TextStyle(
                         color: Color(0xFF0F172A),
-                        fontSize: 16,
+                        fontSize: 15,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
-                    const SizedBox(height: 3),
-                    Text(
-                      widget.service.name,
-                      style: const TextStyle(
-                        color: Color(0xFF64748B),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEFF6FF),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: const Color(0xFFDBEAFE)),
+                      ),
+                      child: Text(
+                        'Total: ₹${_visitingCharge.toInt()}',
+                        style: const TextStyle(
+                          color: Color(0xFF1D4ED8),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
                     ),
                   ],
                 ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEFF6FF),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: const Color(0xFFDBEAFE)),
-                ),
-                child: Text(
-                  '₹${_visitingCharge.toInt()} Visit Fee',
-                  style: const TextStyle(
-                    color: Color(0xFF1D4ED8),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
+                const SizedBox(height: 10),
+                ..._items.map((item) => Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.check_circle_rounded, size: 16, color: Color(0xFF1864E8)),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          '${item.serviceName} • ${item.name}',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: Color(0xFF334155),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      Text(
+                        '₹${item.visitingCharge.toInt()}',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: Color(0xFF0F172A),
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                )),
+              ],
+            ),
+          ),
+        ] else if (sub != null) ...[
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        sub.name,
+                        style: const TextStyle(
+                          color: Color(0xFF0F172A),
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        widget.service?.name ?? '',
+                        style: const TextStyle(
+                          color: Color(0xFF64748B),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ),
-            ],
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEFF6FF),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: const Color(0xFFDBEAFE)),
+                  ),
+                  child: Text(
+                    '₹${_visitingCharge.toInt()} Visit Fee',
+                    style: const TextStyle(
+                      color: Color(0xFF1D4ED8),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
+        ],
 
         const SizedBox(height: 14),
 
@@ -709,7 +844,7 @@ class _DirectBookingSheetState extends State<DirectBookingSheet> {
         _buildTimeSlotCards(),
 
         // Dynamic Questions (if any configured for this subservice)
-        if (sub.requiredFields.isNotEmpty) ...[
+        if (!_isCart && sub != null && sub.requiredFields.isNotEmpty) ...[
           const SizedBox(height: 24),
           _buildSectionHeader('Service Details', 'Please answer these questions for accurate diagnosis'),
           const SizedBox(height: 10),
@@ -880,6 +1015,7 @@ class _DirectBookingSheetState extends State<DirectBookingSheet> {
 
   List<Widget> _buildDynamicFields() {
     final sub = widget.subService;
+    if (_isCart || sub == null) return [];
     return sub.requiredFields.asMap().entries.map((entry) {
       final i = entry.key;
       final f = entry.value;
@@ -1218,19 +1354,50 @@ class _DirectBookingSheetState extends State<DirectBookingSheet> {
                 ],
               ),
               const Divider(height: 20, color: Color(0xFFF1F5F9)),
-              Text(
-                sub.name,
-                style: const TextStyle(
-                  color: Color(0xFF0F172A),
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
+              if (_isCart) ...[
+                Text(
+                  '${_items.length} Services Booked',
+                  style: const TextStyle(
+                    color: Color(0xFF0F172A),
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                widget.service.name,
-                style: const TextStyle(color: Color(0xFF64748B), fontSize: 12),
-              ),
+                const SizedBox(height: 6),
+                ..._items.map((it) => Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 2),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.check_circle_rounded, size: 14, color: Color(0xFF1864E8)),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          '${it.serviceName} • ${it.name}',
+                          style: const TextStyle(color: Color(0xFF334155), fontSize: 13, fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                      Text(
+                        '₹${it.visitingCharge.toInt()}',
+                        style: const TextStyle(color: Color(0xFF0F172A), fontSize: 13, fontWeight: FontWeight.w700),
+                      ),
+                    ],
+                  ),
+                )),
+              ] else if (sub != null) ...[
+                Text(
+                  sub.name,
+                  style: const TextStyle(
+                    color: Color(0xFF0F172A),
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  widget.service?.name ?? '',
+                  style: const TextStyle(color: Color(0xFF64748B), fontSize: 12),
+                ),
+              ],
               const SizedBox(height: 12),
               Row(
                 children: [
@@ -1364,22 +1531,44 @@ class _DirectBookingSheetState extends State<DirectBookingSheet> {
                 ),
               ),
               const Divider(height: 20, color: Color(0xFFDBEAFE)),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Text(
-                      '${widget.subService.name} Visiting Fee',
-                      style: const TextStyle(color: Color(0xFF475569), fontSize: 13, fontWeight: FontWeight.w600),
+              if (_isCart) ...[
+                ..._items.map((it) => Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          '${it.name} Visiting Fee',
+                          style: const TextStyle(color: Color(0xFF475569), fontSize: 13, fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Text(
+                        '₹${it.visitingCharge.toInt()}',
+                        style: const TextStyle(color: Color(0xFF1864E8), fontSize: 14, fontWeight: FontWeight.w800),
+                      ),
+                    ],
+                  ),
+                )),
+              ] else ...[
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        '${_subService?.name ?? "Service"} Visiting Fee',
+                        style: const TextStyle(color: Color(0xFF475569), fontSize: 13, fontWeight: FontWeight.w600),
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  Text(
-                    '₹${_visitingCharge.toInt()}',
-                    style: const TextStyle(color: Color(0xFF1864E8), fontSize: 14, fontWeight: FontWeight.w800),
-                  ),
-                ],
-              ),
+                    const SizedBox(width: 10),
+                    Text(
+                      '₹${_visitingCharge.toInt()}',
+                      style: const TextStyle(color: Color(0xFF1864E8), fontSize: 14, fontWeight: FontWeight.w800),
+                    ),
+                  ],
+                ),
+              ],
               for (final charge in _additionalCharges) ...[
                 const SizedBox(height: 8),
                 Row(

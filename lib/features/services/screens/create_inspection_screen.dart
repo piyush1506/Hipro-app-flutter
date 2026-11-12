@@ -1175,6 +1175,34 @@ Future<bool> showPhonePromptDialog(BuildContext context) async {
     );
   }
 
+  Widget _buildInspectionWorkflowBullet({
+    required IconData icon,
+    required String title,
+    required String desc,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 16, color: const Color(0xFF16A34A)),
+        const SizedBox(width: 8),
+        Expanded(
+          child: RichText(
+            text: TextSpan(
+              style: const TextStyle(color: Color(0xFF166534), fontSize: 12),
+              children: [
+                TextSpan(
+                  text: '$title: ',
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
+                TextSpan(text: desc),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildStep1Service() {
     if (_isLoadingData) {
       return const Center(
@@ -1203,6 +1231,63 @@ Future<bool> showPhonePromptDialog(BuildContext context) async {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Inspection Request Workflow Guide Banner
+        Container(
+          margin: const EdgeInsets.only(bottom: 20),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF0FDF4),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFFBBF7D0)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF16A34A),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(Icons.engineering_rounded, size: 18, color: Colors.white),
+                  ),
+                  const SizedBox(width: 10),
+                  const Expanded(
+                    child: Text(
+                      'Site Inspection Request Workflow',
+                      style: TextStyle(
+                        color: Color(0xFF14532D),
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              _buildInspectionWorkflowBullet(
+                icon: Icons.person_pin_circle_outlined,
+                title: 'Single Engineer Visit',
+                desc: 'Only 1 certified civil engineer visits your site to inspect and measure.',
+              ),
+              const SizedBox(height: 8),
+              _buildInspectionWorkflowBullet(
+                icon: Icons.assignment_outlined,
+                title: 'Assessment & BOM Preparation',
+                desc: 'The engineer assesses requirements and generates a comprehensive quotation.',
+              ),
+              const SizedBox(height: 8),
+              _buildInspectionWorkflowBullet(
+                icon: Icons.payments_outlined,
+                title: 'Pay After Inspection',
+                desc: '₹0 Upfront: Review the scope and quote first, then proceed to payment to confirm booking.',
+              ),
+            ],
+          ),
+        ),
+
         _buildProfessionalDropdown(
           label: 'Select Service Category',
           value: _selectedCategory,

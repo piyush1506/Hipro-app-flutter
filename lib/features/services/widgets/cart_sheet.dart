@@ -341,12 +341,11 @@ class CartSheet extends StatelessWidget {
                         Expanded(
                           child: ElevatedButton(
                             onPressed: () {
-                              final firstItem = cart.items.first;
+                              final items = cart.items.toList();
                               Navigator.of(context).pop();
                               DirectBookingSheet.show(
                                 context,
-                                service: firstItem.service,
-                                subService: firstItem.subService,
+                                cartItems: items,
                               );
                             },
                             style: ElevatedButton.styleFrom(
@@ -359,7 +358,7 @@ class CartSheet extends StatelessWidget {
                               elevation: 0,
                             ),
                             child: Text(
-                              'Proceed to Select Date & Location (₹${cart.totalVisitingCharge.toInt()}) →',
+                              'Proceed to Instant Booking (₹${cart.totalVisitingCharge.toInt()}) →',
                               style: const TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w700,

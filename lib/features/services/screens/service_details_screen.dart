@@ -548,44 +548,74 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
                         ),
                       ),
                       const SizedBox(width: 10),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () {
-                            if (subServices.isNotEmpty) {
-                              DirectBookingSheet.show(
-                                context,
-                                service: service,
-                                subService: subServices.first,
-                              );
-                            } else {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (context) => CreateInspectionScreen(
-                                    preselectedService: service,
+                      ListenableBuilder(
+                        listenable: CartService.instance,
+                        builder: (context, _) {
+                          final cart = CartService.instance;
+                          if (cart.isEmpty) {
+                            return Expanded(
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  if (subServices.isNotEmpty) {
+                                    DirectBookingSheet.show(
+                                      context,
+                                      service: service,
+                                      subService: subServices.first,
+                                    );
+                                  } else {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (context) => CreateInspectionScreen(
+                                          preselectedService: service,
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF1864E8),
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  elevation: 0,
+                                ),
+                                child: Text(
+                                  subServices.isNotEmpty
+                                      ? 'Instant Book (₹${subServices.first.visitingCharge.toInt()} Visit) →'
+                                      : 'Book Inspection →',
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w700,
                                   ),
                                 ),
-                              );
-                            }
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color.fromARGB(255, 65, 63, 68),
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                              ),
+                            );
+                          }
+                          return Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: () => CartSheet.show(context),
+                              icon: const Icon(Icons.shopping_bag_outlined, size: 18),
+                              label: Text(
+                                'View Cart (${cart.count}) • ₹${cart.totalVisitingCharge.toInt()} →',
+                                style: const TextStyle(
+                                  fontSize: 13.5,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF1864E8),
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                elevation: 0,
+                              ),
                             ),
-                            elevation: 0,
-                          ),
-                          child: Text(
-                            subServices.isNotEmpty
-                                ? 'Book Now (₹${subServices.first.visitingCharge.toInt()} Visit) →'
-                                : 'Book Inspection →',
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
+                          );
+                        },
                       ),
                     ],
                   ),
@@ -794,23 +824,21 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
                           ),
                           decoration: BoxDecoration(
                             color: inCart
-                                ? const Color.fromARGB(255, 83, 81, 87)
+                                ? const Color(0xFF1864E8)
                                 : Colors.white,
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
-                              color: inCart
-                                  ? const Color.fromARGB(255, 83, 81, 87)
-                                  : const Color.fromARGB(255, 128, 114, 153),
+                              color: const Color(0xFF1864E8),
                             ),
                           ),
                           child: Icon(
                             inCart
                                 ? Icons.check_rounded
-                                : Icons.add_rounded,
+                                : Icons.add_shopping_cart_rounded,
                             size: 16,
                             color: inCart
                                 ? Colors.white
-                                : const Color.fromARGB(255, 124, 113, 143),
+                                : const Color(0xFF1864E8),
                           ),
                         ),
                       );
@@ -828,7 +856,7 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
                           );
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color.fromARGB(255, 65, 63, 68),
+                          backgroundColor: const Color(0xFF1864E8),
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 9),
                           shape: RoundedRectangleBorder(
@@ -837,9 +865,9 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
                           elevation: 0,
                         ),
                         child: Text(
-                          'Book (₹${sub.visitingCharge.toInt()})',
+                          'Instant Book (₹${sub.visitingCharge.toInt()})',
                           style: const TextStyle(
-                            fontSize: 12.5,
+                            fontSize: 12,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
@@ -861,18 +889,18 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
                           );
                         },
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: const Color(0xFF334155),
-                          side: const BorderSide(color: Color(0xFFCBD5E1)),
+                          foregroundColor: const Color(0xFF16A34A),
+                          side: const BorderSide(color: Color(0xFF16A34A)),
                           padding: const EdgeInsets.symmetric(vertical: 9),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
                           ),
                         ),
                         child: const Text(
-                          'Get Quote',
+                          'Inspection',
                           style: TextStyle(
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w600,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
                       ),
