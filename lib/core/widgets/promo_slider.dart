@@ -143,7 +143,10 @@ class _PromoSliderState extends State<PromoSlider> {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.slides.isEmpty) return const SizedBox.shrink();
+    final activeSlides = widget.slides
+        .where((s) => s.isActive && (s.resolvedImageUrl.isNotEmpty || s.title.isNotEmpty))
+        .toList();
+    if (activeSlides.isEmpty) return const SizedBox.shrink();
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -152,23 +155,23 @@ class _PromoSliderState extends State<PromoSlider> {
           height: widget.height,
           child: PageView.builder(
             controller: _pageController,
-            itemCount: widget.slides.length,
+            itemCount: activeSlides.length,
             onPageChanged: (idx) {
               setState(() {
                 _currentPage = idx;
               });
             },
             itemBuilder: (context, index) {
-              final slide = widget.slides[index];
+              final slide = activeSlides[index];
               return _buildSlideCard(slide);
             },
           ),
         ),
-        if (widget.slides.length > 1) ...[
+        if (activeSlides.length > 1) ...[
           const SizedBox(height: 10),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(widget.slides.length, (idx) {
+            children: List.generate(activeSlides.length, (idx) {
               final isSelected = idx == _currentPage;
               return AnimatedContainer(
                 duration: const Duration(milliseconds: 250),

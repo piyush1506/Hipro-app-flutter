@@ -34,7 +34,18 @@ class _SelectLocationScreenState extends State<SelectLocationScreen> {
   @override
   void initState() {
     super.initState();
-    _citiesFuture = _apiService.fetchSupportedCities();
+    _citiesFuture = _apiService.fetchSupportedCities().then((cities) {
+      final active = cities.where((c) => c.isActive).toList();
+      // If there is ONLY ONE city, auto-select it and skip asking the user
+      if (active.length == 1 && !_isSelecting) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            _onCityPicked(active.first);
+          }
+        });
+      }
+      return cities;
+    });
   }
 
   @override

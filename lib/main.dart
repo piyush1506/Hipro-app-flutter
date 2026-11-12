@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 
 import 'config/constants/app_constants.dart';
 import 'config/theme/app_theme.dart';
+import 'core/network/api_client.dart';
 import 'core/services/push_notification_service.dart';
 import 'core/session/user_session.dart';
 import 'core/state/app_state.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'features/auth/screens/login_screen.dart';
+import 'features/home/data/service_api_service.dart';
 import 'features/home/screens/select_location_screen.dart';
 import 'features/navigation/main_nav_screen.dart';
 
@@ -29,6 +31,15 @@ void main() async {
 
   try {
     await UserSession.init();
+    // If user has not selected a city yet, check backend:
+    // If there is ONLY ONE operational city, auto-select it immediately without asking the user.
+    if (!UserSession().hasSelectedCity) {
+      final cities = await ServiceApiService(ApiClient()).fetchSupportedCities();
+      final active = cities.where((c) => c.isActive).toList();
+      if (active.length == 1) {
+        await UserSession().setSelectedCity(active.first.name);
+      }
+    }
   } catch (e) {
     debugPrint('UserSession init error: $e');
   }

@@ -63,23 +63,24 @@ class _OffersSectionState extends State<OffersSection> {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.offers.isEmpty) return const SizedBox.shrink();
+    final activeOffers = widget.offers.where((o) => o.isActive).toList();
+    if (activeOffers.isEmpty) return const SizedBox.shrink();
 
     final Set<String> dynamicCategories = {'All'};
-    for (final o in widget.offers) {
+    for (final o in activeOffers) {
       if (o.category.trim().isNotEmpty) {
         dynamicCategories.add(o.category.trim());
       }
     }
     final offerTabs = dynamicCategories.toList();
 
-    final filteredOffers = widget.offers.where((o) {
+    final filteredOffers = activeOffers.where((o) {
       if (_selectedTab == 'All') return true;
       return o.category.toLowerCase() == _selectedTab.toLowerCase();
     }).toList();
 
     final displayList =
-        filteredOffers.isNotEmpty ? filteredOffers : widget.offers;
+        filteredOffers.isNotEmpty ? filteredOffers : activeOffers;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

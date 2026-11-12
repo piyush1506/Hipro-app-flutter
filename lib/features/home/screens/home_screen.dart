@@ -456,7 +456,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
                       // Zomato/Swiggy-styled City Location Bar
                       InkWell(
-                        onTap: () => CitySelectionSheet.show(context),
+                        onTap: ServiceApiService.hasMultipleCities
+                            ? () => CitySelectionSheet.show(context)
+                            : null,
                         borderRadius: BorderRadius.circular(14),
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
@@ -490,38 +492,40 @@ class _HomeScreenState extends State<HomeScreen> {
                                           text: city.isNotEmpty ? city : 'Select Location',
                                           style: const TextStyle(fontWeight: FontWeight.w800, color: Color(0xFF1864E8)),
                                         ),
-                                        const TextSpan(
-                                          text: ' • Tap to change location',
-                                          style: TextStyle(color: Color(0xFF64748B), fontSize: 11.5),
-                                        ),
+                                        if (ServiceApiService.hasMultipleCities)
+                                          const TextSpan(
+                                            text: ' • Tap to change location',
+                                            style: TextStyle(color: Color(0xFF64748B), fontSize: 11.5),
+                                          ),
                                       ],
                                     ),
                                   ),
                                 ),
                               ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(color: const Color(0xFFCBD5E1)),
-                                ),
-                                child: const Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      'Change',
-                                      style: TextStyle(
-                                        color: Color(0xFF1864E8),
-                                        fontSize: 11.5,
-                                        fontWeight: FontWeight.w700,
+                              if (ServiceApiService.hasMultipleCities)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: const Color(0xFFCBD5E1)),
+                                  ),
+                                  child: const Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        'Change',
+                                        style: TextStyle(
+                                          color: Color(0xFF1864E8),
+                                          fontSize: 11.5,
+                                          fontWeight: FontWeight.w700,
+                                        ),
                                       ),
-                                    ),
-                                    SizedBox(width: 2),
-                                    Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF1864E8), size: 15),
-                                  ],
+                                      SizedBox(width: 2),
+                                      Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF1864E8), size: 15),
+                                    ],
+                                  ),
                                 ),
-                              ),
                             ],
                           ),
                         ),
@@ -562,7 +566,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         FutureBuilder<List<SlideItem>>(
                           future: _slidesFuture,
                           builder: (context, slideSnap) {
-                            final slides = slideSnap.data ?? [];
+                            final slides = (slideSnap.data ?? [])
+                                .where((s) => s.isActive && (s.resolvedImageUrl.isNotEmpty || s.title.isNotEmpty))
+                                .toList();
                             if (slides.isEmpty) {
                               return const SizedBox.shrink();
                             }
@@ -2388,7 +2394,9 @@ class _HomeScreenState extends State<HomeScreen> {
     return FutureBuilder<List<OfferItem>>(
       future: _offersFuture,
       builder: (context, snapshot) {
-        final allOffers = snapshot.data ?? [];
+        final allOffers = (snapshot.data ?? [])
+            .where((o) => o.isActive && o.title.trim().isNotEmpty)
+            .toList();
         if (allOffers.isEmpty) {
           return const SizedBox.shrink();
         }

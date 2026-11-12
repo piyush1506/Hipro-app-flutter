@@ -21,7 +21,27 @@ class CitySelectionSheet extends StatefulWidget {
   static Future<String?> show(
     BuildContext context, {
     ValueChanged<String>? onCitySelected,
-  }) {
+  }) async {
+    try {
+      final cities = await ServiceApiService(ApiClient()).fetchSupportedCities();
+      final active = cities.where((c) => c.isActive).toList();
+      // If there is only ONE operational city, do not ask the user for a city
+      if (active.length <= 1) {
+        if (active.length == 1) {
+          final singleCity = active.first.name;
+          await UserSession().setSelectedCity(singleCity);
+          onCitySelected?.call(singleCity);
+          if (context.mounted) {
+            AppToast.show(context, message: '📍 Operating in $singleCity');
+          }
+          return singleCity;
+        }
+        return null;
+      }
+    } catch (_) {}
+
+    if (!context.mounted) return null;
+
     return showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
@@ -47,7 +67,18 @@ class _CitySelectionSheetState extends State<CitySelectionSheet> {
   @override
   void initState() {
     super.initState();
-    _citiesFuture = _apiService.fetchSupportedCities();
+    _citiesFuture = _apiService.fetchSupportedCities().then((cities) {
+      final active = cities.where((c) => c.isActive).toList();
+      // If only one city exists, auto-select it immediately without asking
+      if (active.length == 1 && mounted) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            _selectCity(active.first.name);
+          }
+        });
+      }
+      return cities;
+    });
   }
 
   @override

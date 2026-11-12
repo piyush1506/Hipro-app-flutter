@@ -31,6 +31,35 @@ class _CouponInputCardState extends State<CouponInputCard> {
   bool _isLoading = false;
   String? _errorMessage;
 
+  List<OfferItem>? _availableCoupons;
+  bool _hasChecked = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkAvailableCoupons();
+  }
+
+  void _checkAvailableCoupons() async {
+    try {
+      final offers = await _apiService.fetchOffers(section: widget.section);
+      final valid = offers.where((o) => o.isActive && o.code.trim().isNotEmpty).toList();
+      if (mounted) {
+        setState(() {
+          _availableCoupons = valid;
+          _hasChecked = true;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _availableCoupons = [];
+          _hasChecked = true;
+        });
+      }
+    }
+  }
+
   @override
   void dispose() {
     _controller.dispose();
@@ -86,6 +115,9 @@ class _CouponInputCardState extends State<CouponInputCard> {
   }
 
   void _openAvailableCouponsSheet() async {
+    if (_availableCoupons != null && _availableCoupons!.isEmpty) {
+      return;
+    }
     final selectedOffer = await AvailableCouponsSheet.show(
       context,
       orderAmount: widget.orderAmount,
@@ -102,6 +134,11 @@ class _CouponInputCardState extends State<CouponInputCard> {
   Widget build(BuildContext context) {
     if (widget.appliedCoupon != null) {
       return _buildAppliedCouponView(widget.appliedCoupon!);
+    }
+
+    // If 0 coupons exist in the system and no coupon is applied, show NOTHING
+    if (!_hasChecked || (_availableCoupons == null || _availableCoupons!.isEmpty)) {
+      return const SizedBox.shrink();
     }
 
     return Container(

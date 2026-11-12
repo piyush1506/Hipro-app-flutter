@@ -22,7 +22,28 @@ class AvailableCouponsSheet extends StatefulWidget {
     required double orderAmount,
     String? currentCouponCode,
     String section = 'services',
-  }) {
+  }) async {
+    try {
+      final offers = await ServiceApiService(ApiClient()).fetchOffers(section: section);
+      final valid = offers.where((o) => o.isActive && o.code.trim().isNotEmpty).toList();
+      if (valid.isEmpty) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('No coupons currently available'),
+              behavior: SnackBarBehavior.floating,
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+        return null;
+      }
+    } catch (_) {
+      return null;
+    }
+
+    if (!context.mounted) return null;
+
     return showModalBottomSheet<OfferItem>(
       context: context,
       isScrollControlled: true,

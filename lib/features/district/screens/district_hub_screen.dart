@@ -376,20 +376,34 @@ class _DistrictHubScreenState extends State<DistrictHubScreen> {
             ),
 
             // Promotional Banner Slider (when not searching)
-            if (_searchQuery.isEmpty && _slides.isNotEmpty) ...[
+            if (_searchQuery.isEmpty &&
+                _slides
+                    .where((s) =>
+                        s.isActive &&
+                        (s.resolvedImageUrl.isNotEmpty || s.title.isNotEmpty))
+                    .isNotEmpty) ...[
               const SizedBox(height: 18),
               PromoSlider(
-                slides: _slides,
+                slides: _slides
+                    .where((s) =>
+                        s.isActive &&
+                        (s.resolvedImageUrl.isNotEmpty || s.title.isNotEmpty))
+                    .toList(),
                 activeDotColor: const Color(0xFFE11D48),
               ),
             ],
 
             // Offers & Deals Section (when not searching)
-            if (_searchQuery.isEmpty && _offers.isNotEmpty) ...[
+            if (_searchQuery.isEmpty &&
+                _offers
+                    .where((o) => o.isActive && o.title.trim().isNotEmpty)
+                    .isNotEmpty) ...[
               const SizedBox(height: 10),
               OffersSection(
                 title: 'Adventure Deals & Offers',
-                offers: _offers,
+                offers: _offers
+                    .where((o) => o.isActive && o.title.trim().isNotEmpty)
+                    .toList(),
                 section: 'adventure',
               ),
             ],

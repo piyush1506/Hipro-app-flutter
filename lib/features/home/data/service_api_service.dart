@@ -34,19 +34,43 @@ class ServiceApiService {
     }
   }
 
+  static List<CityItem>? _cachedCities;
+  static List<SlideItem>? _cachedSlides;
+  static List<OfferItem>? _cachedOffers;
+
+  /// Returns true if there are 2 or more operational cities.
+  /// If false, only a single city exists and city selection should be bypassed.
+  static bool get hasMultipleCities {
+    if (_cachedCities == null) return true; // Default to true until fetched
+    final active = _cachedCities!.where((c) => c.isActive).toList();
+    return active.length > 1;
+  }
+
+  /// Returns the single operational city if exactly one city exists, else null.
+  static CityItem? get singleOperationalCity {
+    if (_cachedCities == null) return null;
+    final active = _cachedCities!.where((c) => c.isActive).toList();
+    return active.length == 1 ? active.first : null;
+  }
+
   /// Fetches supported operational cities dynamically from backend DB
-  Future<List<CityItem>> fetchSupportedCities() async {
+  Future<List<CityItem>> fetchSupportedCities({bool forceRefresh = false}) async {
+    if (!forceRefresh && _cachedCities != null && _cachedCities!.isNotEmpty) {
+      return _cachedCities!;
+    }
     try {
       final response = await apiClient.dio.get('/services/cities');
       if (response.statusCode == 200 && response.data != null) {
         final raw = response.data['cities'];
         if (raw is List) {
-          return raw.map((e) => CityItem.fromJson(e as Map<String, dynamic>)).toList();
+          final list = raw.map((e) => CityItem.fromJson(e as Map<String, dynamic>)).toList();
+          _cachedCities = list;
+          return list;
         }
       }
-      return [];
+      return _cachedCities ?? [];
     } catch (e) {
-      return [];
+      return _cachedCities ?? [];
     }
   }
 
@@ -103,7 +127,13 @@ class ServiceApiService {
     }
   }
 
-  Future<List<SlideItem>> fetchSlides({String? section}) async {
+  static List<SlideItem>? get cachedSlides => _cachedSlides;
+  static List<OfferItem>? get cachedOffers => _cachedOffers;
+
+  Future<List<SlideItem>> fetchSlides({String? section, bool forceRefresh = false}) async {
+    if (!forceRefresh && section == null && _cachedSlides != null && _cachedSlides!.isNotEmpty) {
+      return _cachedSlides!;
+    }
     try {
       final response = await apiClient.dio.get(
         '/slides',
@@ -113,9 +143,11 @@ class ServiceApiService {
         final dynamic rawList =
             response.data['slides'] ?? response.data['data'] ?? response.data;
         if (rawList is List) {
-          return rawList
+          final list = rawList
               .map((json) => SlideItem.fromJson(json as Map<String, dynamic>))
               .toList();
+          if (section == null) _cachedSlides = list;
+          return list;
         }
       }
     } catch (_) {
@@ -125,7 +157,10 @@ class ServiceApiService {
     return [];
   }
 
-  Future<List<OfferItem>> fetchOffers({String? section}) async {
+  Future<List<OfferItem>> fetchOffers({String? section, bool forceRefresh = false}) async {
+    if (!forceRefresh && section == null && _cachedOffers != null && _cachedOffers!.isNotEmpty) {
+      return _cachedOffers!;
+    }
     try {
       final response = await apiClient.dio.get(
         '/offers',
@@ -135,9 +170,11 @@ class ServiceApiService {
         final dynamic rawList =
             response.data['offers'] ?? response.data['data'] ?? response.data;
         if (rawList is List) {
-          return rawList
+          final list = rawList
               .map((json) => OfferItem.fromJson(json as Map<String, dynamic>))
               .toList();
+          if (section == null) _cachedOffers = list;
+          return list;
         }
       }
     } catch (_) {
