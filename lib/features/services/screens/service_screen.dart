@@ -2,8 +2,10 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 
+import '../../../config/theme/app_colors.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/session/user_session.dart';
+import '../../../core/widgets/app_ui.dart';
 import '../../../core/widgets/chat_sheet.dart';
 import '../../../core/widgets/city_selection_sheet.dart';
 import '../../home/data/service_api_service.dart';
@@ -524,81 +526,58 @@ class _ServicesScreenState extends State<ServicesScreen> {
                               const SizedBox(height: 12),
                           itemBuilder: (context, index) {
                             final service = filteredServices[index];
-                            return Material(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(16),
-                              child: InkWell(
-                                onTap: () {
-                                  ServiceSubservicesSheet.show(
-                                    context,
-                                    service: service,
-                                  );
-                                },
-                                borderRadius: BorderRadius.circular(16),
-                                child: Container(
-                                  padding: const EdgeInsets.all(14),
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(16),
-                                    border: Border.all(
-                                      color: const Color(0xFFE2E8F0),
-                                    ),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: const Color(0xFF0F172A)
-                                            .withValues(alpha: 0.02),
-                                        blurRadius: 8,
-                                        offset: const Offset(0, 3),
-                                      ),
-                                    ],
-                                  ),
-                                  child: Row(
+                            return AppCard(
+                              onTap: () {
+                                ServiceSubservicesSheet.show(
+                                  context,
+                                  service: service,
+                                );
+                              },
+                              padding: const EdgeInsets.all(14),
+                              borderRadius: 18,
+                              child: Row(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
                                       // Service Image
-                                      ClipRRect(
-                                        borderRadius: BorderRadius.circular(16),
-                                        child: Container(
-                                          width: 88,
-                                          height: 88,
-                                          color: const Color(0xFFEFF6FF),
-                                          padding: (service.imageUrl.isNotEmpty && !service.imageUrl.contains('cdn-icons-png'))
-                                              ? EdgeInsets.zero
-                                              : const EdgeInsets.all(8),
-                                          child: service.imageUrl.isNotEmpty
-                                              ? CachedNetworkImage(
-                                                  imageUrl: service.imageUrl,
-                                                  fit: service.imageUrl.contains('cdn-icons-png')
-                                                      ? BoxFit.contain
-                                                      : BoxFit.cover,
-                                                  filterQuality: FilterQuality.high,
-                                                   fadeInDuration: const Duration(milliseconds: 100),
-                                                   fadeOutDuration: const Duration(milliseconds: 100),
-                                                   placeholder: (_, _) => Shimmer.fromColors(
-                                                     baseColor: const Color(0xFFE2E8F0),
-                                                     highlightColor: const Color(0xFFF8FAFC),
-                                                     child: Container(
-                                                       width: 88,
-                                                       height: 88,
-                                                       color: Colors.white,
-                                                     ),
-                                                   ),
-                                                   errorWidget: (_, _, _) =>
-                                                      const Icon(
-                                                        Icons
-                                                            .construction_rounded,
-                                                        color: Color(
-                                                          0xFF1864E8,
-                                                        ),
-                                                        size: 36,
-                                                      ),
-                                                )
-                                              : const Icon(
+                                      GradientIconTile(
+                                        size: 82,
+                                        iconSize: 34,
+                                        borderRadius: 16,
+                                        background: const Color(0xFFEFF6FF),
+                                        iconColor: const Color(0xFF1864E8),
+                                        child: service.imageUrl.isNotEmpty
+                                            ? CachedNetworkImage(
+                                                imageUrl: service.imageUrl,
+                                                fit: service.imageUrl
+                                                        .contains('cdn-icons-png')
+                                                    ? BoxFit.contain
+                                                    : BoxFit.cover,
+                                                filterQuality: FilterQuality.high,
+                                                fadeInDuration:
+                                                    const Duration(milliseconds: 120),
+                                                fadeOutDuration:
+                                                    const Duration(milliseconds: 120),
+                                                placeholder: (_, _) =>
+                                                    Shimmer.fromColors(
+                                                  baseColor:
+                                                      const Color(0xFFE2E8F0),
+                                                  highlightColor:
+                                                      const Color(0xFFF8FAFC),
+                                                  child: Container(
+                                                    width: 82,
+                                                    height: 82,
+                                                    color: Colors.white,
+                                                  ),
+                                                ),
+                                                errorWidget: (_, _, _) =>
+                                                    const Icon(
                                                   Icons.construction_rounded,
                                                   color: Color(0xFF1864E8),
-                                                  size: 36,
+                                                  size: 32,
                                                 ),
-                                        ),
+                                              )
+                                            : null,
                                       ),
                                       const SizedBox(width: 14),
 
@@ -639,85 +618,70 @@ class _ServicesScreenState extends State<ServicesScreen> {
                                                   MainAxisAlignment
                                                       .spaceBetween,
                                               children: [
-                                                Container(
-                                                  padding:
-                                                      const EdgeInsets.symmetric(
-                                                        horizontal: 8,
-                                                        vertical: 3,
-                                                      ),
-                                                  decoration: BoxDecoration(
-                                                    color: const Color(
-                                                      0xFFEFF6FF,
-                                                    ),
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          8,
-                                                        ),
-                                                  ),
-                                                  child: Text(
-                                                    service.startingPrice > 0
-                                                        ? 'Starts ₹${service.startingPrice.toInt()}'
-                                                        : 'Certified Inspection',
-                                                    style: const TextStyle(
-                                                      color: Color(0xFF1864E8),
-                                                      fontSize: 11.5,
-                                                      fontWeight:
-                                                          FontWeight.w700,
-                                                    ),
-                                                  ),
-                                                ),
-                                                Material(
+                                                PillLabel(
+                                                  label: service.startingPrice > 0
+                                                      ? 'Starts ₹${service.startingPrice.toInt()}'
+                                                      : 'Certified Inspection',
                                                   color: const Color(0xFF1864E8),
+                                                  icon: service.startingPrice > 0
+                                                      ? Icons.payments_outlined
+                                                      : Icons
+                                                          .verified_user_outlined,
+                                                ),
+                                                PressableScale(
+                                                  onTap: () {
+                                                    Navigator.of(
+                                                      context,
+                                                    ).push(
+                                                      MaterialPageRoute(
+                                                        builder: (context) =>
+                                                            CreateInspectionScreen(
+                                                          preselectedService:
+                                                              service,
+                                                            ),
+                                                      ),
+                                                    );
+                                                  },
                                                   borderRadius:
                                                       BorderRadius.circular(10),
-                                                  child: InkWell(
-                                                    onTap: () {
-                                                      Navigator.of(
-                                                        context,
-                                                      ).push(
-                                                        MaterialPageRoute(
-                                                          builder: (context) =>
-                                                              CreateInspectionScreen(
-                                                                preselectedService:
-                                                                    service,
-                                                              ),
+                                                  child: Container(
+                                                    padding:
+                                                        const EdgeInsets.symmetric(
+                                                      horizontal: 12,
+                                                          vertical: 7,
                                                         ),
-                                                      );
-                                                    },
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          10,
-                                                        ),
-                                                    child: const Padding(
-                                                      padding:
-                                                          EdgeInsets.symmetric(
-                                                            horizontal: 12,
-                                                            vertical: 6,
+                                                    decoration: BoxDecoration(
+                                                      gradient:
+                                                          AppColors.primaryGradient,
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            10,
                                                           ),
-                                                      child: Row(
-                                                        mainAxisSize:
-                                                            MainAxisSize.min,
-                                                        children: [
-                                                          Text(
-                                                            'Book',
-                                                            style: TextStyle(
-                                                              color:
-                                                                  Colors.white,
-                                                              fontSize: 12,
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .w700,
-                                                            ),
-                                                          ),
-                                                          SizedBox(width: 4),
-                                                          Icon(
-                                                            Icons
-                                                                .arrow_forward_rounded,
-                                                            size: 13,
-                                                            color: Colors.white,
-                                                          ),
-                                                        ],
+                                                      boxShadow: AppShadows.glow(
+                                                        AppColors.primary,
                                                       ),
+                                                    ),
+                                                    child: const Row(
+                                                      mainAxisSize:
+                                                          MainAxisSize.min,
+                                                      children: [
+                                                        Text(
+                                                          'Book',
+                                                          style: TextStyle(
+                                                            color: Colors.white,
+                                                            fontSize: 12,
+                                                            fontWeight:
+                                                                FontWeight.w700,
+                                                          ),
+                                                        ),
+                                                        SizedBox(width: 4),
+                                                        Icon(
+                                                          Icons
+                                                              .arrow_forward_rounded,
+                                                          size: 13,
+                                                          color: Colors.white,
+                                                        ),
+                                                      ],
                                                     ),
                                                   ),
                                                 ),
@@ -728,8 +692,6 @@ class _ServicesScreenState extends State<ServicesScreen> {
                                       ),
                                     ],
                                   ),
-                                ),
-                              ),
                             );
                           },
                         ),

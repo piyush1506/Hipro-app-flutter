@@ -76,8 +76,6 @@ class AppColors {
 class AppShadows {
   AppShadows._();
 
-  static const Color _ink = Color(0xFF0F172A);
-
   static const List<BoxShadow> xs = [
     BoxShadow(
       color: Color(0x0D0F172A),

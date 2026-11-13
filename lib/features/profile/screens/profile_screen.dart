@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../config/theme/app_colors.dart';
 import '../../../core/session/user_session.dart';
 import '../../auth/screens/login_screen.dart';
 import '../../quotations/screens/quotation_screen.dart';
@@ -44,89 +45,142 @@ class ProfileScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF0F172A).withValues(alpha: 0.03),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
+                gradient: AppColors.primaryGradient,
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: AppShadows.glow(AppColors.primary),
               ),
               child: Column(
                 children: [
-                  CircleAvatar(
-                    radius: 36,
-                    backgroundColor: const Color(0xFF0F172A),
-                     foregroundImage: (photo != null && photo.trim().isNotEmpty)
-                        ? NetworkImage(photo)
-                        : null,
-                    child: Text(
-                      initials.isEmpty ? 'u':initials,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 22,
-                        fontWeight: FontWeight.w700,
+                  Container(
+                    padding: const EdgeInsets.all(3),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.45),
+                        width: 2,
+                      ),
+                    ),
+                    child: CircleAvatar(
+                      radius: 36,
+                      backgroundColor: Colors.white,
+                      foregroundImage:
+                          (photo != null && photo.trim().isNotEmpty)
+                              ? NetworkImage(photo)
+                              : null,
+                      child: Text(
+                        initials.isEmpty ? 'U' : initials,
+                        style: const TextStyle(
+                          color: AppColors.primaryDark,
+                          fontSize: 22,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
                     ),
                   ),
                   const SizedBox(height: 12),
                   Text(
                     displayName,
-                    style: TextStyle(
-                      color: Color(0xFF0F172A),
-                      fontSize: 18,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 19,
                       fontWeight: FontWeight.w800,
+                      letterSpacing: -0.3,
                     ),
                   ),
-                  const SizedBox(height: 2),
-                  const Text(
-                    'Client',
-                    style: TextStyle(
-                      color: Color(0xFF64748B),
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.18),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.28),
+                      ),
+                    ),
+                    child: const Text(
+                      'CLIENT ACCOUNT',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 1,
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 14),
-                  const Divider(color: Color(0xFFF1F5F9)),
-                  const SizedBox(height: 10),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children:  [
-                      Icon(Icons.phone_rounded, size: 14, color: Color(0xFF94A3B8)),
-                      SizedBox(width: 6),
-                      Text(
-                        phone.isEmpty ? 'phone not added' :phone
-                        ,
-                        style: TextStyle(
-                          color: Color(0xFF475569),
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w500,
-                        ),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.14),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.16),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                    const Icon(Icons.email_rounded, size: 14, color: Color(0xFF94A3B8)),
-                      SizedBox(width: 6),
-                      Flexible(
-                      child :Text(
-                      email.isEmpty ? 'email is not added':email,
-                      overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: Color(0xFF475569),
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w500,
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.phone_rounded,
+                              size: 15,
+                              color: Colors.white70,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                phone.isEmpty
+                                    ? 'Phone not added'
+                                    : phone,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                      )
-                    ],
+                        if (email.isNotEmpty) ...[
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            child: Divider(
+                              height: 1,
+                              color: Colors.white.withValues(alpha: 0.16),
+                            ),
+                          ),
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.email_rounded,
+                                size: 15,
+                                color: Colors.white70,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  email,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -142,7 +196,11 @@ class ProfileScreen extends StatelessWidget {
                 side: const BorderSide(color: Color(0xFFE2E8F0)),
               ),
               clipBehavior: Clip.antiAlias,
-              child: Column(
+              child: DecoratedBox(
+                decoration: const BoxDecoration(
+                  boxShadow: AppShadows.sm,
+                ),
+                child: Column(
                 children: [
                   _buildMenuItem(
                     context: context,
@@ -237,7 +295,8 @@ class ProfileScreen extends StatelessWidget {
                   ),
                 ],
               ),
-            ),
+                ),
+              ),
 
             const SizedBox(height: 20),
 

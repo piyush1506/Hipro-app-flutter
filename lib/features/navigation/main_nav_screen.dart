@@ -479,7 +479,7 @@ class _ModernNavigationItem extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
+                  duration: const Duration(milliseconds: 220),
                   curve: Curves.easeOutCubic,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 14,
@@ -491,10 +491,25 @@ class _ModernNavigationItem extends StatelessWidget {
                         : Colors.transparent,
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  child: Icon(
-                    selected ? item.selectedIcon : item.icon,
-                    size: 22,
-                    color: selected ? activeColor : inactiveColor,
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 220),
+                    switchInCurve: Curves.easeOutBack,
+                    switchOutCurve: Curves.easeIn,
+                    transitionBuilder: (child, animation) {
+                      return FadeTransition(
+                        opacity: animation,
+                        child: ScaleTransition(
+                          scale: Tween<double>(begin: 0.7, end: 1).animate(animation),
+                          child: child,
+                        ),
+                      );
+                    },
+                    child: Icon(
+                      selected ? item.selectedIcon : item.icon,
+                      key: ValueKey<bool>(selected),
+                      size: 22,
+                      color: selected ? activeColor : inactiveColor,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 3),

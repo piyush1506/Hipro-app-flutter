@@ -806,64 +806,146 @@ class _SubServiceDetailScreenState extends State<SubServiceDetailScreen> {
                         },
                       ),
 
-                      if (subService.bookNowEnabled) const SizedBox(width: 8),
-
-                      // Book / Quote Service Button
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: subService.bookNowEnabled
-                              ? () {
-                                  DirectBookingSheet.show(
-                                    context,
-                                    service: service,
-                                    subService: subService,
-                                  );
-                                }
-                              : subService.getQuoteEnabled
-                                  ? () {
-                                      Navigator.of(context).push(
-                                        MaterialPageRoute(
-                                          builder: (context) => CreateInspectionScreen(
-                                            preselectedService: service,
-                                            preselectedSubService: subService,
-                                          ),
-                                        ),
-                                      );
-                                    }
-                                  : null,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF1864E8),
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            elevation: 1,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
+                      if (subService.bookNowEnabled && subService.getQuoteEnabled) ...[
+                        const SizedBox(width: 8),
+                        Expanded(
+                          flex: 5,
+                          child: ElevatedButton(
+                            onPressed: () {
+                              DirectBookingSheet.show(
+                                context,
+                                service: service,
+                                subService: subService,
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF1864E8),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              elevation: 1,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.flash_on_rounded, size: 15),
+                                SizedBox(width: 3),
+                                Text(
+                                  'Instant Book',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: -0.2,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                subService.bookNowEnabled
-                                    ? 'Book Service'
-                                    : subService.getQuoteEnabled
-                                        ? 'Get Quote'
-                                        : 'Unavailable',
-                                style: const TextStyle(
-                                  fontSize: 13.5,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: -0.2,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          flex: 5,
+                          child: OutlinedButton(
+                            onPressed: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => CreateInspectionScreen(
+                                    preselectedService: service,
+                                    preselectedSubService: subService,
+                                  ),
                                 ),
+                              );
+                            },
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: const Color(0xFF16A34A),
+                              side: const BorderSide(color: Color(0xFF16A34A), width: 1.2),
+                              backgroundColor: const Color(0xFFF0FDF4),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
                               ),
-                              if (subService.bookNowEnabled || subService.getQuoteEnabled) ...[
-                                const SizedBox(width: 4),
-                                const Icon(Icons.arrow_forward_rounded, size: 15),
+                            ),
+                            child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.engineering_outlined, size: 15),
+                                SizedBox(width: 3),
+                                Text(
+                                  'Inspection',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: -0.2,
+                                  ),
+                                ),
                               ],
-                            ],
+                            ),
                           ),
                         ),
-                      ),
+                      ] else ...[
+                        if (subService.bookNowEnabled) const SizedBox(width: 8),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: subService.bookNowEnabled
+                                ? () {
+                                    DirectBookingSheet.show(
+                                      context,
+                                      service: service,
+                                      subService: subService,
+                                    );
+                                  }
+                                : subService.getQuoteEnabled
+                                    ? () {
+                                        Navigator.of(context).push(
+                                          MaterialPageRoute(
+                                            builder: (context) => CreateInspectionScreen(
+                                              preselectedService: service,
+                                              preselectedSubService: subService,
+                                            ),
+                                          ),
+                                        );
+                                      }
+                                    : null,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: subService.bookNowEnabled
+                                  ? const Color(0xFF1864E8)
+                                  : const Color(0xFF16A34A),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              elevation: 1,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  subService.bookNowEnabled
+                                      ? 'Book Service'
+                                      : subService.getQuoteEnabled
+                                          ? 'Request Inspection'
+                                          : 'Unavailable',
+                                  style: const TextStyle(
+                                    fontSize: 13.5,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: -0.2,
+                                  ),
+                                ),
+                                if (subService.bookNowEnabled || subService.getQuoteEnabled) ...[
+                                  const SizedBox(width: 4),
+                                  const Icon(Icons.arrow_forward_rounded, size: 15),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ),

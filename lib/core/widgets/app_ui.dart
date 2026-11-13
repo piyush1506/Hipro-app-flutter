@@ -438,11 +438,13 @@ class GradientIconTile extends StatelessWidget {
       ),
       clipBehavior: Clip.antiAlias,
       child: child ??
-          Icon(
-            icon,
-            color: iconColor ?? Colors.white,
-            size: iconSize ?? size * 0.46,
-          ),
+          (icon != null
+              ? Icon(
+                  icon,
+                  color: iconColor ?? Colors.white,
+                  size: iconSize ?? size * 0.46,
+                )
+              : const SizedBox.shrink()),
     );
   }
 }

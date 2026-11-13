@@ -358,15 +358,15 @@ class _ServiceSubservicesSheetState extends State<ServiceSubservicesSheet> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(
-                              Icons.request_quote_outlined,
+                              Icons.engineering_outlined,
                               size: 16,
                               color: _mode == BookingMode.quotable
-                                  ? const Color.fromARGB(255, 41, 45, 51)
+                                  ? const Color(0xFF16A34A)
                                   : const Color.fromARGB(255, 49, 53, 58),
                             ),
                             const SizedBox(width: 5),
                             Text(
-                              'Quotable Booking',
+                              'Inspection Request',
                               style: TextStyle(
                                 color: _mode == BookingMode.quotable
                                     ? const Color(0xFF0F172A)
@@ -535,7 +535,7 @@ class _ServiceSubservicesSheetState extends State<ServiceSubservicesSheet> {
             if (!sub.bookNowEnabled) {
               AppToast.show(
                 context,
-                message: '${sub.name} is only available for Quotable Booking.',
+                message: '${sub.name} is only available for Inspection Request.',
               );
               return;
             }
@@ -556,7 +556,7 @@ class _ServiceSubservicesSheetState extends State<ServiceSubservicesSheet> {
               );
               return;
             }
-            // Quotable Booking Mode -> Open CreateInspectionScreen
+            // Inspection Request Mode -> Open CreateInspectionScreen
             Navigator.of(context).push(
               MaterialPageRoute(
                 builder: (context) => CreateInspectionScreen(
@@ -662,28 +662,38 @@ class _ServiceSubservicesSheetState extends State<ServiceSubservicesSheet> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        // Visit Fee Tag
+                        // Visit Fee Tag or Site Inspection Tag
                         Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 8,
                             vertical: 3.5,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFEFF6FF),
+                            color: _mode == BookingMode.instant
+                                ? const Color(0xFFEFF6FF)
+                                : const Color(0xFFF0FDF4),
                             borderRadius: BorderRadius.circular(6),
-                            border: Border.all(color: const Color(0xFFDBEAFE)),
+                            border: Border.all(
+                              color: _mode == BookingMode.instant
+                                  ? const Color(0xFFDBEAFE)
+                                  : const Color(0xFFBBF7D0),
+                            ),
                           ),
                           child: Text(
-                            '₹${sub.visitingCharge.toInt()} Visit Fee',
-                            style: const TextStyle(
-                              color: Color(0xFF1D4ED8),
+                            _mode == BookingMode.instant
+                                ? '₹${sub.visitingCharge.toInt()} Visit Fee'
+                                : 'Site Inspection',
+                            style: TextStyle(
+                              color: _mode == BookingMode.instant
+                                  ? const Color(0xFF1D4ED8)
+                                  : const Color(0xFF16A34A),
                               fontSize: 11,
                               fontWeight: FontWeight.w700,
                             ),
                           ),
                         ),
 
-                        // Action Button (Add / Added / Quote)
+                        // Action Button (Add / Added / Inspect)
                         if (_mode == BookingMode.instant)
                           GestureDetector(
                             behavior: HitTestBehavior.opaque,
@@ -769,12 +779,11 @@ class _ServiceSubservicesSheetState extends State<ServiceSubservicesSheet> {
                               vertical: 6,
                             ),
                             decoration: BoxDecoration(
-                              color: const Color.fromARGB(255, 69, 67, 75),
+                              color: const Color(0xFF16A34A),
                               borderRadius: BorderRadius.circular(8),
                               boxShadow: [
                                 BoxShadow(
-                                  color: const Color.fromARGB(255, 149, 134, 173)
-                                      .withValues(alpha: 0.25),
+                                  color: const Color(0xFF16A34A).withValues(alpha: 0.25),
                                   blurRadius: 6,
                                   offset: const Offset(0, 2),
                                 ),
@@ -783,8 +792,14 @@ class _ServiceSubservicesSheetState extends State<ServiceSubservicesSheet> {
                             child: const Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
+                                Icon(
+                                  Icons.engineering_outlined,
+                                  size: 14,
+                                  color: Colors.white,
+                                ),
+                                SizedBox(width: 4),
                                 Text(
-                                  'Quote',
+                                  'Request',
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontSize: 12,
@@ -829,16 +844,16 @@ class _ServiceSubservicesSheetState extends State<ServiceSubservicesSheet> {
                 shape: BoxShape.circle,
               ),
               child: Icon(
-                isInstant ? Icons.bolt_outlined : Icons.request_quote_outlined,
+                isInstant ? Icons.bolt_outlined : Icons.engineering_outlined,
                 size: 36,
-                color: const Color(0xFF64748B),
+                color: isInstant ? const Color(0xFF1864E8) : const Color(0xFF16A34A),
               ),
             ),
             const SizedBox(height: 16),
             Text(
               isInstant
                   ? 'No Instant Booking Available'
-                  : 'No Quotable Booking Available',
+                  : 'No Inspection Request Available',
               style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
@@ -848,7 +863,7 @@ class _ServiceSubservicesSheetState extends State<ServiceSubservicesSheet> {
             const SizedBox(height: 6),
             Text(
               isInstant
-                  ? 'Sub-services in this category require on-site engineer inspection. Switch to Quotable Booking above.'
+                  ? 'Sub-services in this category require on-site engineer inspection. Switch to Inspection Request above.'
                   : 'Sub-services in this category are available for instant on-demand visits. Switch to Instant Booking above.',
               textAlign: TextAlign.center,
               style: const TextStyle(

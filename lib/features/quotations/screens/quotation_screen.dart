@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../config/theme/app_colors.dart';
 import '../../../core/widgets/chat_sheet.dart';
 import '../../../main.dart';
 import '../../inspections/models/request_model.dart';
@@ -593,13 +594,7 @@ class _QuotationScreenState extends State<QuotationScreen> {
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(color: const Color(0xFFE2E8F0)),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF0F172A).withValues(alpha: 0.02),
-                        blurRadius: 8,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
+                    boxShadow: AppShadows.xs,
                   ),
                   child: Material(
                     color: Colors.transparent,
@@ -1047,13 +1042,7 @@ class _QuotationScreenState extends State<QuotationScreen> {
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(color: const Color(0xFFE2E8F0)),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF0F172A).withValues(alpha: 0.02),
-                        blurRadius: 8,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
+                    boxShadow: AppShadows.xs,
                   ),
                   child: Material(
                     color: Colors.transparent,
