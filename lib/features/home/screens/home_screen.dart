@@ -20,10 +20,10 @@ import '../../quotations/screens/quotation_screen.dart';
 import '../../services/models/service_model.dart';
 import '../../services/screens/my_direct_bookings_screen.dart';
 import '../../services/widgets/service_subservices_sheet.dart';
+import '../../platform/screens/ecommerce_module_screen.dart';
 import '../data/service_api_service.dart';
 import '../models/slide_model.dart';
 import '../../../core/widgets/city_selection_sheet.dart';
-import '../../../core/widgets/app_ui.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key, this.onOpenDrawer, this.onSwitchTab});
@@ -1899,204 +1899,26 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Modals for FreshInBasket, Fashion Basket, Reviews
+  // Dynamic Gateways for FreshInBasket & Fashion Basket
   void _showFreshInBasketSheet(BuildContext context) {
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (ctx) => Padding(
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 44,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFCBD5E1),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF0FDF4),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(Icons.shopping_basket_rounded, color: Color(0xFF16A34A), size: 28),
-                ),
-                const SizedBox(width: 12),
-                const Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'FreshInBasket',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFF0F172A),
-                        ),
-                      ),
-                      Text(
-                        'Farm Fresh Fruits, Vegetables & Dairy',
-                        style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFC),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
-              ),
-              child: const Row(
-                children: [
-                  Icon(Icons.bolt_rounded, color: Color(0xFFEAB308), size: 22),
-                  SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      'Superfast 30-min express delivery directly from verified local orchards & farms to your doorstep.',
-                      style: TextStyle(fontSize: 12.5, color: Color(0xFF334155), height: 1.35),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.of(ctx).pop();
-                  AppToast.show(context, message: 'FreshInBasket catalog is opening soon in your area!');
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF16A34A),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                child: const Text('Explore Fresh Produce →', style: TextStyle(fontWeight: FontWeight.w700)),
-              ),
-            ),
-          ],
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const EcommerceModuleScreen(
+          categorySlug: 'freshinbasket',
+          categoryTitle: 'FreshInBasket',
+          themeColor: Color(0xFF16A34A),
         ),
       ),
     );
   }
 
   void _showFashionBasketSheet(BuildContext context) {
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (ctx) => Padding(
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 44,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFCBD5E1),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFDF2F8),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(Icons.checkroom_rounded, color: Color(0xFFE11D48), size: 28),
-                ),
-                const SizedBox(width: 12),
-                const Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Fashion Basket',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFF0F172A),
-                        ),
-                      ),
-                      Text(
-                        'Trending Apparel, Footwear & Accessories',
-                        style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFC),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
-              ),
-              child: const Row(
-                children: [
-                  Icon(Icons.auto_awesome_rounded, color: Color(0xFFE11D48), size: 22),
-                  SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      'Curated premium ethnic and casual wear with easy returns and guaranteed authentic brands.',
-                      style: TextStyle(fontSize: 12.5, color: Color(0xFF334155), height: 1.35),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.of(ctx).pop();
-                  AppToast.show(context, message: 'Fashion Basket styles are dropping this week!');
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFE11D48),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                child: const Text('View Collection →', style: TextStyle(fontWeight: FontWeight.w700)),
-              ),
-            ),
-          ],
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const EcommerceModuleScreen(
+          categorySlug: 'fashion_basket',
+          categoryTitle: 'Fashion Basket',
+          themeColor: Color(0xFFDB2777),
         ),
       ),
     );
