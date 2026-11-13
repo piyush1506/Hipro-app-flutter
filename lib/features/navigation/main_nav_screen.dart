@@ -6,9 +6,10 @@ import '../district/screens/adventure_categories_screen.dart';
 import '../district/screens/adventure_club_screen.dart';
 import '../district/screens/district_hub_screen.dart';
 import '../district/screens/ent_my_bookings_screen.dart';
+import '../favorites/screens/favorites_screen.dart';
 import '../home/screens/home_screen.dart';
+import '../notifications/screens/notifications_screen.dart';
 import '../profile/screens/profile_screen.dart';
-import '../quotations/screens/quotation_screen.dart';
 import '../services/screens/service_screen.dart';
 
 class MainNavScreen extends StatefulWidget {
@@ -65,7 +66,7 @@ class _MainNavScreenState extends State<MainNavScreen> {
     if (_isAdventureMode) {
       _adventureIndex = widget.initialTab.clamp(0, 3);
     } else {
-      _serviceIndex = widget.initialTab.clamp(0, 3);
+      _serviceIndex = widget.initialTab.clamp(0, 4);
     }
 
     _servicePageController = PageController(initialPage: _serviceIndex);
@@ -77,7 +78,8 @@ class _MainNavScreenState extends State<MainNavScreen> {
         onSwitchTab: setTab,
       ),
       const ServicesScreen(),
-      const QuotationScreen(),
+      const FavoritesScreen(),
+      const NotificationsScreen(),
       ProfileScreen(onSwitchTab: setTab),
     ];
 
@@ -152,13 +154,12 @@ class _MainNavScreenState extends State<MainNavScreen> {
   }
 
   void setTab(int index, {int? section}) {
-    // Tab 4 is always the special mode switch button
-    if (index == 4) {
-      toggleMode();
-      return;
-    }
-
     if (_isAdventureMode) {
+      // In adventure mode, index 4 switches back to services
+      if (index == 4) {
+        switchToServices();
+        return;
+      }
       if (index >= 0 && index < _adventureScreens.length) {
         if (_adventureIndex == index) return;
         setState(() => _adventureIndex = index);
@@ -174,12 +175,6 @@ class _MainNavScreenState extends State<MainNavScreen> {
     } else {
       if (index >= 0 && index < _serviceScreens.length) {
         setState(() {
-          if (index == 2 && section != null) {
-            _serviceScreens[2] = QuotationScreen(
-              key: UniqueKey(),
-              initialSection: section,
-            );
-          }
           _serviceIndex = index;
         });
         if (_servicePageController.hasClients &&
@@ -201,26 +196,25 @@ class _MainNavScreenState extends State<MainNavScreen> {
       selectedIcon: Icons.home_rounded,
     ),
     _NavigationItem(
-      label: 'Services',
+      label: 'Categories',
       icon: Icons.grid_view_outlined,
       selectedIcon: Icons.grid_view_rounded,
     ),
     _NavigationItem(
-      label: 'Bookings',
-      icon: Icons.calendar_month_outlined,
-      selectedIcon: Icons.calendar_month_rounded,
+      label: 'Favorites',
+      icon: Icons.favorite_outline_rounded,
+      selectedIcon: Icons.favorite_rounded,
+    ),
+    _NavigationItem(
+      label: 'Notifications',
+      icon: Icons.notifications_none_rounded,
+      selectedIcon: Icons.notifications_rounded,
+      badgeCount: 2,
     ),
     _NavigationItem(
       label: 'Profile',
       icon: Icons.person_outline_rounded,
       selectedIcon: Icons.person_rounded,
-    ),
-    _NavigationItem(
-      label: 'Adventure',
-      icon: Icons.paragliding_rounded,
-      selectedIcon: Icons.paragliding_rounded,
-      isSpecialSwitcher: true,
-      switcherGradient: [Color(0xFFE11D48), Color(0xFFF97316)],
     ),
   ];
 
@@ -399,7 +393,7 @@ class _ModernNavigationItem extends StatelessWidget {
 
     // Special switcher styling for the last mode toggle button
     if (item.isSpecialSwitcher) {
-      final isAdventureButton = item.switcherGradient != null;
+      final buttonColor = item.switcherColor ?? const Color(0xFF1864E8);
 
       return Semantics(
         button: true,
@@ -408,8 +402,7 @@ class _ModernNavigationItem extends StatelessWidget {
           color: Colors.transparent,
           child: InkWell(
             onTap: onTap,
-            splashColor: (isAdventureButton ? const Color(0xFFE11D48) : const Color(0xFF1864E8))
-                .withValues(alpha: 0.12),
+            splashColor: buttonColor.withValues(alpha: 0.12),
             highlightColor: Colors.transparent,
             child: Center(
               child: Column(
@@ -419,19 +412,11 @@ class _ModernNavigationItem extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
                     decoration: BoxDecoration(
-                      gradient: isAdventureButton
-                          ? LinearGradient(
-                              colors: item.switcherGradient!,
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            )
-                          : null,
-                      color: isAdventureButton ? null : (item.switcherColor ?? const Color(0xFF1864E8)),
+                      color: buttonColor,
                       borderRadius: BorderRadius.circular(14),
                       boxShadow: [
                         BoxShadow(
-                          color: (isAdventureButton ? const Color(0xFFE11D48) : const Color(0xFF1864E8))
-                              .withValues(alpha: 0.35),
+                          color: buttonColor.withValues(alpha: 0.35),
                           blurRadius: 6,
                           offset: const Offset(0, 2),
                         ),
@@ -449,7 +434,7 @@ class _ModernNavigationItem extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      color: isAdventureButton ? const Color(0xFFE11D48) : const Color(0xFF1864E8),
+                      color: buttonColor,
                       fontSize: 10.5,
                       fontWeight: FontWeight.w800,
                       letterSpacing: -0.1,
@@ -478,39 +463,45 @@ class _ModernNavigationItem extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 220),
-                  curve: Curves.easeOutCubic,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 3,
-                  ),
-                  decoration: BoxDecoration(
-                    color: selected
-                        ? activeColor.withValues(alpha: 0.12)
-                        : Colors.transparent,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 220),
-                    switchInCurve: Curves.easeOutBack,
-                    switchOutCurve: Curves.easeIn,
-                    transitionBuilder: (child, animation) {
-                      return FadeTransition(
-                        opacity: animation,
-                        child: ScaleTransition(
-                          scale: Tween<double>(begin: 0.7, end: 1).animate(animation),
-                          child: child,
-                        ),
-                      );
-                    },
-                    child: Icon(
+                Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Icon(
                       selected ? item.selectedIcon : item.icon,
-                      key: ValueKey<bool>(selected),
-                      size: 22,
+                      size: 24,
                       color: selected ? activeColor : inactiveColor,
                     ),
-                  ),
+                    if (item.badgeCount != null && item.badgeCount! > 0)
+                      Positioned(
+                        right: -6,
+                        top: -3,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 4,
+                            vertical: 1.5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFEF4444),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: Colors.white, width: 1.5),
+                          ),
+                          constraints: const BoxConstraints(
+                            minWidth: 16,
+                            minHeight: 16,
+                          ),
+                          child: Text(
+                            '${item.badgeCount}',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 9,
+                              fontWeight: FontWeight.w800,
+                              height: 1,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
                 const SizedBox(height: 3),
                 Text(
@@ -520,10 +511,22 @@ class _ModernNavigationItem extends StatelessWidget {
                   style: TextStyle(
                     color: selected ? activeColor : inactiveColor,
                     fontSize: 11,
-                    fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                    fontWeight: selected ? FontWeight.w800 : FontWeight.w500,
                     letterSpacing: -0.1,
                   ),
                 ),
+                if (selected)
+                  Container(
+                    margin: const EdgeInsets.only(top: 2),
+                    width: 18,
+                    height: 2.5,
+                    decoration: BoxDecoration(
+                      color: activeColor,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  )
+                else
+                  const SizedBox(height: 4.5),
               ],
             ),
           ),
@@ -558,15 +561,15 @@ class _NavigationItem {
     required this.label,
     required this.icon,
     required this.selectedIcon,
+    this.badgeCount,
     this.isSpecialSwitcher = false,
-    this.switcherGradient,
     this.switcherColor,
   });
 
   final String label;
   final IconData icon;
   final IconData selectedIcon;
+  final int? badgeCount;
   final bool isSpecialSwitcher;
-  final List<Color>? switcherGradient;
   final Color? switcherColor;
 }
