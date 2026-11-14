@@ -252,7 +252,7 @@ class _MainNavScreenState extends State<MainNavScreen> {
   Widget build(BuildContext context) {
     final activeIndex = _isAdventureMode ? _adventureIndex : _serviceIndex;
     final activeItems = _isAdventureMode ? _adventureItems : _serviceItems;
-    final themeColor = _isAdventureMode ? const Color(0xFFE11D48) : const Color(0xFF1864E8);
+    final themeColor = _isAdventureMode ? const Color(0xFFE11D48) : const Color(0xFF0753ED);
 
     return PopScope(
       canPop: !_isAdventureMode,
@@ -332,7 +332,7 @@ class _MainNavScreenState extends State<MainNavScreen> {
                   border: Border.all(
                     color: _isAdventureMode
                         ? const Color(0xFFFECDD3)
-                        : const Color(0xFFE2E8F0),
+                        : const Color(0xFFDDE5FF),
                     width: 1.0,
                   ),
                 ),
@@ -389,7 +389,7 @@ class _ModernNavigationItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const inactiveColor = Color(0xFF64748B);
+    const inactiveColor = Color(0xFF485A86);
 
     // Special switcher styling for the last mode toggle button
     if (item.isSpecialSwitcher) {
