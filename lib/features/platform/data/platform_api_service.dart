@@ -95,5 +95,39 @@ class PlatformApiService {
     } catch (_) {}
     return [];
   }
+
+  /// Places an order for FreshInBasket / Fashion Basket items
+  Future<Map<String, dynamic>?> placeOrder({
+    required String categorySlug,
+    required String categoryTitle,
+    required String customerName,
+    required String customerPhone,
+    required String deliveryAddress,
+    required String city,
+    required List<Map<String, dynamic>> items,
+    required double totalAmount,
+    String paymentMethod = 'COD',
+  }) async {
+    try {
+      final res = await _client.dio.post(
+        '/api/v1/platform/orders',
+        data: {
+          'categorySlug': categorySlug,
+          'categoryTitle': categoryTitle,
+          'customerName': customerName,
+          'customerPhone': customerPhone,
+          'deliveryAddress': deliveryAddress,
+          'city': city,
+          'items': items,
+          'totalAmount': totalAmount,
+          'paymentMethod': paymentMethod,
+        },
+      );
+      if (res.data is Map && res.data['success'] == true) {
+        return Map<String, dynamic>.from(res.data['order']);
+      }
+    } catch (_) {}
+    return null;
+  }
 }
 

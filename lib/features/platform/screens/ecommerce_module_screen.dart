@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 
 import '../../../core/session/user_session.dart';
-import '../../../core/widgets/app_ui.dart';
 import '../data/platform_api_service.dart';
 import '../models/ecommerce_product_model.dart';
 
@@ -186,6 +185,53 @@ class _EcommerceModuleScreenState extends State<EcommerceModuleScreen> {
                     ),
                   ),
                   const Divider(),
+                  // Express Delivery & Address Info
+                  Container(
+                    margin: const EdgeInsets.symmetric(vertical: 8),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Row(
+                          children: [
+                            Icon(Icons.bolt_rounded, size: 16, color: Color(0xFFEAB308)),
+                            SizedBox(width: 4),
+                            Text(
+                              'Express 25-30 Min Delivery',
+                              style: TextStyle(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w800,
+                                color: Color(0xFF0F172A),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            const Icon(Icons.location_on_rounded, size: 13, color: Color(0xFF1864E8)),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                'Delivering to: ${UserSession().selectedCity.isNotEmpty ? UserSession().selectedCity : "Bhilwara, Rajasthan"}',
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  color: Color(0xFF475569),
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -207,16 +253,37 @@ class _EcommerceModuleScreenState extends State<EcommerceModuleScreen> {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: () {
+                      onPressed: () async {
+                        final itemsPayload = cartProducts.map((p) => {
+                          'productId': p.id,
+                          'name': p.name,
+                          'price': p.price,
+                          'unit': p.unit,
+                          'quantity': _cartQuantities[p.id] ?? 1,
+                          'imageUrl': p.imageUrl,
+                        }).toList();
+
                         Navigator.pop(ctx);
-                        AppToast.show(
-                          context,
-                          title: 'Order Placed!',
-                          message: 'Your ${widget.categoryTitle} order has been forwarded to the express hub.',
+
+                        // Call Backend API to register express order
+                        final order = await _apiService.placeOrder(
+                          categorySlug: widget.categorySlug,
+                          categoryTitle: widget.categoryTitle,
+                          customerName: UserSession().name ?? 'Valued Customer',
+                          customerPhone: UserSession().phone ?? '',
+                          deliveryAddress: 'Home • ${UserSession().selectedCity}',
+                          city: UserSession().selectedCity.isNotEmpty ? UserSession().selectedCity : 'Bhilwara',
+                          items: itemsPayload,
+                          totalAmount: total,
+                          paymentMethod: 'COD',
                         );
-                        setState(() {
-                          _cartQuantities.clear();
-                        });
+
+                        if (mounted) {
+                          _showOrderSuccessDialog(order, total);
+                          setState(() {
+                            _cartQuantities.clear();
+                          });
+                        }
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: widget.themeColor,
@@ -227,8 +294,8 @@ class _EcommerceModuleScreenState extends State<EcommerceModuleScreen> {
                         ),
                       ),
                       child: const Text(
-                        'Confirm & Place Order →',
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+                        'Confirm & Place Order (Cash on Delivery) →',
+                        style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800),
                       ),
                     ),
                   ),
@@ -237,6 +304,120 @@ class _EcommerceModuleScreenState extends State<EcommerceModuleScreen> {
             ),
           );
         },
+      ),
+    );
+  }
+
+  void _showOrderSuccessDialog(Map<String, dynamic>? order, double total) {
+    final orderNumber = order?['orderNumber'] ?? 'FIB-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
+    final est = order?['estimatedDelivery'] ?? '25 - 30 minutes';
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+        child: Padding(
+          padding: const EdgeInsets.all(22),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  color: widget.themeColor.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.check_circle_rounded,
+                  color: widget.themeColor,
+                  size: 40,
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Order Confirmed!',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Order ID: #$orderNumber',
+                style: const TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF64748B),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Estimated Delivery',
+                          style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                        ),
+                        Text(
+                          est,
+                          style: const TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF16A34A),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Amount to Pay (COD)',
+                          style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                        ),
+                        Text(
+                          '₹${total.toInt()}',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w900,
+                            color: Color(0xFF0F172A),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: widget.themeColor,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  child: const Text('Done', style: TextStyle(fontWeight: FontWeight.w700)),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
